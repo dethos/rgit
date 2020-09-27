@@ -1,4 +1,5 @@
 use clap::{App, SubCommand};
+mod data;
 
 fn main() {
     let matches = App::new("rgit vcs")
@@ -14,5 +15,8 @@ fn main() {
 }
 
 fn init() {
-    println!("Hello, world!");
+    match data::init() {
+        Ok(()) => println!("Repository created"),
+        _ => println!("Failed. Perhaps the repository already exists."),
+    }
 }
