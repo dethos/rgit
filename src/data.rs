@@ -24,3 +24,8 @@ pub fn hash_object(content: &Vec<u8>) -> String {
 
     return s;
 }
+
+pub fn get_object(hash: String) -> String {
+    return fs::read_to_string(format!("{}/{}/{}", RGIT_DIR, "objects", hash))
+        .expect("Could not find a matching object");
+}
