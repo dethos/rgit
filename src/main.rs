@@ -39,14 +39,17 @@ fn hash_object(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("hash-object") {
         let content = fs::read(cmd_matches.value_of("file").unwrap())
             .expect("Something went wrong reading the provided file");
-        let hash = data::hash_object(&content);
+        let hash = data::hash_object(&content, "blob".to_owned());
         println!("{}", hash);
     }
 }
 
 fn cat_file(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("cat-file") {
-        let file_contents = data::get_object(cmd_matches.value_of("hash").unwrap().to_owned());
+        let file_contents = data::get_object(
+            cmd_matches.value_of("hash").unwrap().to_owned(),
+            "".to_owned(),
+        );
         println!("{}", file_contents)
     }
 }
