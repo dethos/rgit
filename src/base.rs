@@ -1,4 +1,6 @@
 use std::fs;
+#[path = "data.rs"]
+mod data;
 
 pub fn write_tree(directory: String) {
     let entries = fs::read_dir(&directory).unwrap();
@@ -14,7 +16,8 @@ pub fn write_tree(directory: String) {
         }
 
         if metadata.is_file() {
-            println!("{}", full);
+            let hash = data::hash_object(&fs::read(&full).unwrap(), "blob".to_owned());
+            println!("{} {}", hash, full);
         } else if metadata.is_dir() {
             write_tree(full);
         }
