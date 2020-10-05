@@ -19,12 +19,17 @@ fn main() {
                 .about("outputs the original object from the provided hash")
                 .arg(Arg::with_name("hash").index(1).required(true)),
         )
+        .subcommand(
+            SubCommand::with_name("write-tree")
+                .about("write the current working directory to the database"),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
         Some("init") => init(),
         Some("hash-object") => hash_object(matches),
         Some("cat-file") => cat_file(matches),
+        Some("write-tree") => write_tree(),
         _ => println!("unknown sub command"),
     }
 }
@@ -53,4 +58,8 @@ fn cat_file(matches: ArgMatches) {
         );
         println!("{}", file_contents)
     }
+}
+
+fn write_tree() {
+    base::write_tree(".".to_owned())
 }
