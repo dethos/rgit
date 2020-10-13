@@ -61,5 +61,5 @@ fn cat_file(matches: ArgMatches) {
 }
 
 fn write_tree() {
-    base::write_tree(".".to_owned())
+    println!("{}", base::write_tree(".".to_owned()));
 }
