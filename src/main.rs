@@ -23,6 +23,11 @@ fn main() {
             SubCommand::with_name("write-tree")
                 .about("write the current working directory to the database"),
         )
+        .subcommand(
+            SubCommand::with_name("read-tree")
+                .about("writes a given tree to the working directory")
+                .arg(Arg::with_name("oid").index(1).required(true)),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -30,6 +35,7 @@ fn main() {
         Some("hash-object") => hash_object(matches),
         Some("cat-file") => cat_file(matches),
         Some("write-tree") => write_tree(),
+        Some("read-tree") => read_tree(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -62,4 +68,11 @@ fn cat_file(matches: ArgMatches) {
 
 fn write_tree() {
     println!("{}", base::write_tree(".".to_owned()));
+}
+
+fn read_tree(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("read-tree") {
+        let oid = cmd_matches.value_of("oid").unwrap();
+        base::read_tree(oid.to_owned());
+    }
 }

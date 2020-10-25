@@ -1,4 +1,7 @@
+use std::collections::HashMap;
 use std::fs;
+use std::io;
+use std::path::Path;
 #[path = "data.rs"]
 mod data;
 
@@ -45,10 +48,56 @@ pub fn write_tree(directory: String) -> String {
     return data::hash_object(&tree.into_bytes(), "tree".to_owned());
 }
 
+pub fn read_tree(oid: String) {
+    for (path, object_id) in get_tree(oid, "./".to_owned()).iter() {
+        let mut dirs = Path::new(path).ancestors();
+        dirs.next();
+
+        let dir = dirs.next().unwrap().to_str().unwrap();
+
+        fs::create_dir_all(dir).expect("Cannot create required dirs");
+        fs::write(path, data::get_object(object_id.clone(), "".to_owned()))
+            .expect("Cannot write required object");
+    }
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true
     } else {
         false
     }
+}
+
+fn tree_entries(oid: String) -> Vec<(String, String, String)> {
+    let mut entries: Vec<(String, String, String)> = vec![];
+    let tree_data = data::get_object(oid, "tree".to_owned());
+    for line in tree_data.split_terminator("\n") {
+        let items: Vec<&str> = line.splitn(3, " ").collect();
+        entries.push((
+            items[0].to_owned(), // _type
+            items[1].to_owned(), // oid
+            items[2].to_owned(), // name
+        ));
+    }
+    return entries;
+}
+
+fn get_tree(oid: String, base_path: String) -> HashMap<String, String> {
+    let mut result = HashMap::new();
+    for entry in tree_entries(oid) {
+        // _type, oid, name
+        assert!(entry.2.find("/").is_none());
+        assert!(entry.2 != "..");
+        assert!(entry.2 != ".");
+        let path = base_path.clone() + entry.2.as_str();
+        if entry.0 == "blob".to_owned() {
+            result.insert(path.clone(), entry.1.clone());
+        } else if entry.0 == "tree".to_owned() {
+            result.extend(get_tree(entry.1, format!("{}/", path)));
+        } else {
+            panic!("Unknown tree entry: {}", entry.0);
+        }
+    }
+    result
 }

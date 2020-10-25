@@ -35,6 +35,7 @@ pub fn get_object(hash: String, expected: String) -> String {
 
     if expected != "".to_owned() {
         // Compare the type
+        content.pop();
         assert_eq!(expected, content);
     }
 
