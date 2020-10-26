@@ -28,6 +28,16 @@ fn main() {
                 .about("writes a given tree to the working directory")
                 .arg(Arg::with_name("oid").index(1).required(true)),
         )
+        .subcommand(
+            SubCommand::with_name("commit")
+                .about("writes a named snapshot of the current tree")
+                .arg(
+                    Arg::with_name("message")
+                        .short("m")
+                        .value_name("MESSAGE")
+                        .takes_value(true),
+                ),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -36,6 +46,7 @@ fn main() {
         Some("cat-file") => cat_file(matches),
         Some("write-tree") => write_tree(),
         Some("read-tree") => read_tree(matches),
+        Some("commit") => commit(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -74,5 +85,12 @@ fn read_tree(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("read-tree") {
         let oid = cmd_matches.value_of("oid").unwrap();
         base::read_tree(oid.to_owned());
+    }
+}
+
+fn commit(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("commit") {
+        let message = cmd_matches.value_of("message").unwrap_or("");
+        println!("{}", base::commit(message));
     }
 }

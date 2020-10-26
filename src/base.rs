@@ -62,6 +62,14 @@ pub fn read_tree(oid: String) {
     }
 }
 
+pub fn commit(message: &str) -> String {
+    let mut commit = format!("tree {}\n", write_tree(".".to_owned()));
+    commit += "\n";
+    commit += format!("{}\n", message).as_str();
+
+    return data::hash_object(&commit.into_bytes(), "commit".to_owned());
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true
