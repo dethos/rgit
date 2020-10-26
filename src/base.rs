@@ -49,6 +49,7 @@ pub fn write_tree(directory: String) -> String {
 }
 
 pub fn read_tree(oid: String) {
+    empty_current_directory(".").unwrap();
     for (path, object_id) in get_tree(oid, "./".to_owned()).iter() {
         let mut dirs = Path::new(path).ancestors();
         dirs.next();
@@ -100,4 +101,26 @@ fn get_tree(oid: String, base_path: String) -> HashMap<String, String> {
         }
     }
     result
+}
+
+fn empty_current_directory(dir: &str) -> io::Result<()> {
+    // Delete current directory, less the ignored directories
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if is_ignored(&path.to_str().unwrap().to_owned()) {
+            continue;
+        }
+
+        if path.is_dir() {
+            empty_current_directory(path.to_str().unwrap())?;
+            match fs::remove_dir(&path) {
+                Ok(()) => (),
+                _ => println!("Unable to remove dir {}", path.clone().to_str().unwrap()),
+            };
+        } else {
+            fs::remove_file(&path)?
+        }
+    }
+    Ok(())
 }
