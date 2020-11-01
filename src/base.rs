@@ -64,6 +64,11 @@ pub fn read_tree(oid: String) {
 
 pub fn commit(message: &str) -> String {
     let mut commit = format!("tree {}\n", write_tree(".".to_owned()));
+
+    if let Ok(head) = data::get_head() {
+        commit += format!("parent {}\n", head).as_str();
+    }
+
     commit += "\n";
     commit += format!("{}\n", message).as_str();
 

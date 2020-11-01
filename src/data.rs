@@ -45,3 +45,8 @@ pub fn get_object(hash: String, expected: String) -> String {
 pub fn set_head(oid: String) {
     fs::write(format!("{}/HEAD", RGIT_DIR), oid).expect("Failed to updated HEAD");
 }
+
+pub fn get_head() -> Result<String, Box<dyn std::error::Error + 'static>> {
+    let oid = fs::read_to_string(format!("{}/HEAD", RGIT_DIR))?;
+    return Ok(oid);
+}
