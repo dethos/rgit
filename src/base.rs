@@ -67,7 +67,9 @@ pub fn commit(message: &str) -> String {
     commit += "\n";
     commit += format!("{}\n", message).as_str();
 
-    return data::hash_object(&commit.into_bytes(), "commit".to_owned());
+    let oid = data::hash_object(&commit.into_bytes(), "commit".to_owned());
+    data::set_head(oid.clone());
+    return oid;
 }
 
 fn is_ignored(path: &String) -> bool {
@@ -112,7 +114,7 @@ fn get_tree(oid: String, base_path: String) -> HashMap<String, String> {
 }
 
 fn empty_current_directory(dir: &str) -> io::Result<()> {
-    // Delete current directory, less the ignored directories
+    // Delete current directory, except the ignored directories and files
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         let path = entry.path();

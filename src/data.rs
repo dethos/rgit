@@ -41,3 +41,7 @@ pub fn get_object(hash: String, expected: String) -> String {
 
     return data;
 }
+
+pub fn set_head(oid: String) {
+    fs::write(format!("{}/HEAD", RGIT_DIR), oid).expect("Failed to updated HEAD");
+}
