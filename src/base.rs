@@ -109,6 +109,12 @@ pub fn get_commit(oid: String) -> Commit {
     };
 }
 
+pub fn checkout(oid: String) {
+    let commit = get_commit(oid.clone());
+    read_tree(commit.tree);
+    data::set_head(oid);
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true

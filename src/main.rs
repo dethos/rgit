@@ -43,6 +43,11 @@ fn main() {
                 .about("List all commits")
                 .arg(Arg::with_name("oid").index(1).required(false)),
         )
+        .subcommand(
+            SubCommand::with_name("checkout")
+                .about("Move the current content and HEAD to given commit")
+                .arg(Arg::with_name("oid").index(1).required(true)),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -53,6 +58,7 @@ fn main() {
         Some("read-tree") => read_tree(matches),
         Some("commit") => commit(matches),
         Some("log") => log_commits(matches),
+        Some("checkout") => checkout(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -124,5 +130,12 @@ fn log_commits(matches: ArgMatches) {
 
             oid = commit.parent;
         }
+    }
+}
+
+fn checkout(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("checkout") {
+        let oid = cmd_matches.value_of("oid").unwrap().to_owned();
+        base::checkout(oid);
     }
 }
