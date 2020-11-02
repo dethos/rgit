@@ -38,7 +38,11 @@ fn main() {
                         .takes_value(true),
                 ),
         )
-        .subcommand(SubCommand::with_name("log").about("List all commits"))
+        .subcommand(
+            SubCommand::with_name("log")
+                .about("List all commits")
+                .arg(Arg::with_name("oid").index(1).required(false)),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -48,7 +52,7 @@ fn main() {
         Some("write-tree") => write_tree(),
         Some("read-tree") => read_tree(matches),
         Some("commit") => commit(matches),
-        Some("log") => log_commits(),
+        Some("log") => log_commits(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -97,19 +101,28 @@ fn commit(matches: ArgMatches) {
     }
 }
 
-fn log_commits() {
-    let mut oid = data::get_head().expect("Cannot read HEAD file");
-    loop {
-        let commit = base::get_commit(oid.clone());
-
-        println!("commit {}", oid);
-        println!("{}", commit.message);
-        println!("");
-
-        if commit.parent == "" {
-            break;
+fn log_commits(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("log") {
+        let provided_oid = cmd_matches.value_of("oid").unwrap_or("");
+        let mut oid;
+        if provided_oid == "" {
+            oid = data::get_head().expect("Cannot read HEAD file");
+        } else {
+            oid = provided_oid.to_owned();
         }
 
-        oid = commit.parent;
+        loop {
+            let commit = base::get_commit(oid.clone());
+
+            println!("commit {}", oid);
+            println!("{}", commit.message);
+            println!("");
+
+            if commit.parent == "" {
+                break;
+            }
+
+            oid = commit.parent;
+        }
     }
 }
