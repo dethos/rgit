@@ -5,6 +5,12 @@ use std::path::Path;
 #[path = "data.rs"]
 mod data;
 
+pub struct Commit {
+    pub tree: String,
+    pub parent: String,
+    pub message: String,
+}
+
 pub fn write_tree(directory: String) -> String {
     let mut entries: Vec<(String, String, String)> = vec![];
     let mut name;
@@ -75,6 +81,32 @@ pub fn commit(message: &str) -> String {
     let oid = data::hash_object(&commit.into_bytes(), "commit".to_owned());
     data::set_head(oid.clone());
     return oid;
+}
+
+pub fn get_commit(oid: String) -> Commit {
+    let commit = data::get_object(oid, "commit".to_owned());
+    let tree: String;
+    let mut parent: String = "".to_owned();
+    let message: String;
+    let mut message_start = 2;
+
+    let lines: Vec<&str> = commit.lines().collect();
+    let mut line_items: Vec<&str> = lines[0].splitn(2, " ").collect();
+    tree = line_items[1].to_owned();
+
+    line_items = lines[1].splitn(2, " ").collect();
+    if line_items[0] == "parent" {
+        parent = line_items[1].to_owned();
+        message_start = 3;
+    }
+
+    message = lines[message_start..].join("\n");
+
+    return Commit {
+        tree,
+        parent,
+        message,
+    };
 }
 
 fn is_ignored(path: &String) -> bool {

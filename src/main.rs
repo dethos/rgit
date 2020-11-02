@@ -38,6 +38,7 @@ fn main() {
                         .takes_value(true),
                 ),
         )
+        .subcommand(SubCommand::with_name("log").about("List all commits"))
         .get_matches();
 
     match matches.subcommand_name() {
@@ -47,6 +48,7 @@ fn main() {
         Some("write-tree") => write_tree(),
         Some("read-tree") => read_tree(matches),
         Some("commit") => commit(matches),
+        Some("log") => log_commits(),
         _ => println!("unknown sub command"),
     }
 }
@@ -92,5 +94,22 @@ fn commit(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("commit") {
         let message = cmd_matches.value_of("message").unwrap_or("");
         println!("{}", base::commit(message));
+    }
+}
+
+fn log_commits() {
+    let mut oid = data::get_head().expect("Cannot read HEAD file");
+    loop {
+        let commit = base::get_commit(oid.clone());
+
+        println!("commit {}", oid);
+        println!("{}", commit.message);
+        println!("");
+
+        if commit.parent == "" {
+            break;
+        }
+
+        oid = commit.parent;
     }
 }
