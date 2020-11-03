@@ -115,6 +115,10 @@ pub fn checkout(oid: String) {
     data::set_head(oid);
 }
 
+pub fn create_tag(name: String, oid: String) {
+    println!("{} - {}", name, oid);
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true

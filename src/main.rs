@@ -48,6 +48,12 @@ fn main() {
                 .about("Move the current content and HEAD to given commit")
                 .arg(Arg::with_name("oid").index(1).required(true)),
         )
+        .subcommand(
+            SubCommand::with_name("tag")
+                .about("Create a tag for a given commit")
+                .arg(Arg::with_name("name").index(1).required(true))
+                .arg(Arg::with_name("oid").index(2).required(false)),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -59,6 +65,7 @@ fn main() {
         Some("commit") => commit(matches),
         Some("log") => log_commits(matches),
         Some("checkout") => checkout(matches),
+        Some("tag") => tag(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -137,5 +144,16 @@ fn checkout(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("checkout") {
         let oid = cmd_matches.value_of("oid").unwrap().to_owned();
         base::checkout(oid);
+    }
+}
+
+fn tag(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("tag") {
+        let name = cmd_matches.value_of("name").unwrap().to_owned();
+        let mut oid = cmd_matches.value_of("oid").unwrap_or("").to_owned();
+        if oid == "" {
+            oid = data::get_head().expect("Cannot read HEAD");
+        }
+        base::create_tag(name, oid);
     }
 }
