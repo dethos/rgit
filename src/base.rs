@@ -119,6 +119,13 @@ pub fn create_tag(name: String, oid: String) {
     data::update_ref(format!("refs/tags/{}", name), oid);
 }
 
+pub fn get_oid(name: String) -> String {
+    match data::get_ref(name.clone()) {
+        Ok(oid) => return oid,
+        _ => return name,
+    }
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true

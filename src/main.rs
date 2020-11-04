@@ -88,10 +88,8 @@ fn hash_object(matches: ArgMatches) {
 
 fn cat_file(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("cat-file") {
-        let file_contents = data::get_object(
-            cmd_matches.value_of("hash").unwrap().to_owned(),
-            "".to_owned(),
-        );
+        let hash = base::get_oid(cmd_matches.value_of("hash").unwrap().to_owned());
+        let file_contents = data::get_object(hash, "".to_owned());
         println!("{}", file_contents)
     }
 }
@@ -102,8 +100,8 @@ fn write_tree() {
 
 fn read_tree(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("read-tree") {
-        let oid = cmd_matches.value_of("oid").unwrap();
-        base::read_tree(oid.to_owned());
+        let oid = base::get_oid(cmd_matches.value_of("oid").unwrap().to_owned());
+        base::read_tree(oid);
     }
 }
 
@@ -116,7 +114,7 @@ fn commit(matches: ArgMatches) {
 
 fn log_commits(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("log") {
-        let provided_oid = cmd_matches.value_of("oid").unwrap_or("");
+        let provided_oid = base::get_oid(cmd_matches.value_of("oid").unwrap_or("").to_owned());
         let mut oid;
         if provided_oid == "" {
             oid = data::get_ref("HEAD".to_owned()).expect("Cannot read HEAD file");
@@ -142,7 +140,7 @@ fn log_commits(matches: ArgMatches) {
 
 fn checkout(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("checkout") {
-        let oid = cmd_matches.value_of("oid").unwrap().to_owned();
+        let oid = base::get_oid(cmd_matches.value_of("oid").unwrap().to_owned());
         base::checkout(oid);
     }
 }
@@ -150,7 +148,7 @@ fn checkout(matches: ArgMatches) {
 fn tag(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("tag") {
         let name = cmd_matches.value_of("name").unwrap().to_owned();
-        let mut oid = cmd_matches.value_of("oid").unwrap_or("").to_owned();
+        let mut oid = base::get_oid(cmd_matches.value_of("oid").unwrap_or("").to_owned());
         if oid == "" {
             oid = data::get_ref("HEAD".to_owned()).expect("Cannot read HEAD");
         }
