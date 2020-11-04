@@ -116,7 +116,7 @@ pub fn checkout(oid: String) {
 }
 
 pub fn create_tag(name: String, oid: String) {
-    println!("{} - {}", name, oid);
+    data::update_ref(format!("refs/tags/{}", name), oid);
 }
 
 fn is_ignored(path: &String) -> bool {

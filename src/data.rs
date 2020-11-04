@@ -1,5 +1,6 @@
 use sha1::{Digest, Sha1};
 use std::fs;
+use std::path::Path;
 use std::str;
 
 static RGIT_DIR: &'static str = ".rgit";
@@ -43,7 +44,13 @@ pub fn get_object(hash: String, expected: String) -> String {
 }
 
 pub fn update_ref(reference: String, oid: String) {
-    fs::write(format!("{}/{}", RGIT_DIR, reference), oid).expect("Failed to updated HEAD");
+    let path = format!("{}/{}", RGIT_DIR, reference);
+    let mut parents = Path::new(&path).ancestors();
+    parents.next();
+
+    let parent = parents.next().unwrap().to_str().unwrap();
+    fs::create_dir_all(parent).expect("Cannot create required dirs");
+    fs::write(path, oid).expect("Failed to updated HEAD");
 }
 
 pub fn get_ref(reference: String) -> Result<String, Box<dyn std::error::Error + 'static>> {
