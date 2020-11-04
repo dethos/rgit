@@ -119,7 +119,7 @@ fn log_commits(matches: ArgMatches) {
         let provided_oid = cmd_matches.value_of("oid").unwrap_or("");
         let mut oid;
         if provided_oid == "" {
-            oid = data::get_head().expect("Cannot read HEAD file");
+            oid = data::get_ref("HEAD".to_owned()).expect("Cannot read HEAD file");
         } else {
             oid = provided_oid.to_owned();
         }
@@ -152,7 +152,7 @@ fn tag(matches: ArgMatches) {
         let name = cmd_matches.value_of("name").unwrap().to_owned();
         let mut oid = cmd_matches.value_of("oid").unwrap_or("").to_owned();
         if oid == "" {
-            oid = data::get_head().expect("Cannot read HEAD");
+            oid = data::get_ref("HEAD".to_owned()).expect("Cannot read HEAD");
         }
         base::create_tag(name, oid);
     }

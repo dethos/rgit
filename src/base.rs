@@ -71,7 +71,7 @@ pub fn read_tree(oid: String) {
 pub fn commit(message: &str) -> String {
     let mut commit = format!("tree {}\n", write_tree(".".to_owned()));
 
-    if let Ok(head) = data::get_head() {
+    if let Ok(head) = data::get_ref("HEAD".to_owned()) {
         commit += format!("parent {}\n", head).as_str();
     }
 
@@ -79,7 +79,7 @@ pub fn commit(message: &str) -> String {
     commit += format!("{}\n", message).as_str();
 
     let oid = data::hash_object(&commit.into_bytes(), "commit".to_owned());
-    data::set_head(oid.clone());
+    data::update_ref("HEAD".to_owned(), oid.clone());
     return oid;
 }
 
@@ -112,7 +112,7 @@ pub fn get_commit(oid: String) -> Commit {
 pub fn checkout(oid: String) {
     let commit = get_commit(oid.clone());
     read_tree(commit.tree);
-    data::set_head(oid);
+    data::update_ref("HEAD".to_owned(), oid);
 }
 
 pub fn create_tag(name: String, oid: String) {

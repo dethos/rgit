@@ -42,11 +42,11 @@ pub fn get_object(hash: String, expected: String) -> String {
     return data;
 }
 
-pub fn set_head(oid: String) {
-    fs::write(format!("{}/HEAD", RGIT_DIR), oid).expect("Failed to updated HEAD");
+pub fn update_ref(reference: String, oid: String) {
+    fs::write(format!("{}/{}", RGIT_DIR, reference), oid).expect("Failed to updated HEAD");
 }
 
-pub fn get_head() -> Result<String, Box<dyn std::error::Error + 'static>> {
-    let oid = fs::read_to_string(format!("{}/HEAD", RGIT_DIR))?;
+pub fn get_ref(reference: String) -> Result<String, Box<dyn std::error::Error + 'static>> {
+    let oid = fs::read_to_string(format!("{}/{}", RGIT_DIR, reference))?;
     return Ok(oid);
 }
