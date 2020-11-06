@@ -119,7 +119,11 @@ pub fn create_tag(name: String, oid: String) {
     data::update_ref(format!("refs/tags/{}", name), oid);
 }
 
-pub fn get_oid(name: String) -> String {
+pub fn get_oid(mut name: String) -> String {
+    if name == "@".to_owned() {
+        name = "HEAD".to_owned();
+    }
+
     let refs_to_try: [String; 4] = [
         format!("{}", name),
         format!("refs/{}", name),

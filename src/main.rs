@@ -41,7 +41,7 @@ fn main() {
         .subcommand(
             SubCommand::with_name("log")
                 .about("List all commits")
-                .arg(Arg::with_name("oid").index(1).required(false)),
+                .arg(Arg::with_name("oid").index(1).default_value("@")),
         )
         .subcommand(
             SubCommand::with_name("checkout")
@@ -52,7 +52,7 @@ fn main() {
             SubCommand::with_name("tag")
                 .about("Create a tag for a given commit")
                 .arg(Arg::with_name("name").index(1).required(true))
-                .arg(Arg::with_name("oid").index(2).required(false)),
+                .arg(Arg::with_name("oid").index(2).default_value("@")),
         )
         .get_matches();
 
@@ -114,13 +114,8 @@ fn commit(matches: ArgMatches) {
 
 fn log_commits(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("log") {
-        let provided_ref = cmd_matches.value_of("oid").unwrap_or("").to_owned();
-        let mut oid;
-        if provided_ref == "" {
-            oid = base::get_oid("HEAD".to_owned());
-        } else {
-            oid = base::get_oid(provided_ref.to_owned());
-        }
+        let provided_ref = cmd_matches.value_of("oid").unwrap().to_owned();
+        let mut oid = base::get_oid(provided_ref.to_owned());
 
         loop {
             let commit = base::get_commit(oid.clone());
@@ -148,12 +143,8 @@ fn checkout(matches: ArgMatches) {
 fn tag(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("tag") {
         let name = cmd_matches.value_of("name").unwrap().to_owned();
-        let mut oid = cmd_matches.value_of("oid").unwrap_or("").to_owned();
-        if oid == "" {
-            oid = base::get_oid("HEAD".to_owned());
-        } else {
-            oid = base::get_oid(name.clone());
-        }
+        let provided_ref = cmd_matches.value_of("oid").unwrap().to_owned();
+        let oid = base::get_oid(provided_ref.clone());
         base::create_tag(name, oid);
     }
 }
