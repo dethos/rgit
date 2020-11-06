@@ -114,12 +114,12 @@ fn commit(matches: ArgMatches) {
 
 fn log_commits(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("log") {
-        let provided_oid = base::get_oid(cmd_matches.value_of("oid").unwrap_or("").to_owned());
+        let provided_ref = cmd_matches.value_of("oid").unwrap_or("").to_owned();
         let mut oid;
-        if provided_oid == "" {
-            oid = data::get_ref("HEAD".to_owned()).expect("Cannot read HEAD file");
+        if provided_ref == "" {
+            oid = base::get_oid("HEAD".to_owned());
         } else {
-            oid = provided_oid.to_owned();
+            oid = base::get_oid(provided_ref.to_owned());
         }
 
         loop {
@@ -148,9 +148,11 @@ fn checkout(matches: ArgMatches) {
 fn tag(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("tag") {
         let name = cmd_matches.value_of("name").unwrap().to_owned();
-        let mut oid = base::get_oid(cmd_matches.value_of("oid").unwrap_or("").to_owned());
+        let mut oid = cmd_matches.value_of("oid").unwrap_or("").to_owned();
         if oid == "" {
-            oid = data::get_ref("HEAD".to_owned()).expect("Cannot read HEAD");
+            oid = base::get_oid("HEAD".to_owned());
+        } else {
+            oid = base::get_oid(name.clone());
         }
         base::create_tag(name, oid);
     }

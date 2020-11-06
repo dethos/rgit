@@ -120,10 +120,32 @@ pub fn create_tag(name: String, oid: String) {
 }
 
 pub fn get_oid(name: String) -> String {
-    match data::get_ref(name.clone()) {
-        Ok(oid) => return oid,
-        _ => return name,
+    let refs_to_try: [String; 4] = [
+        format!("{}", name),
+        format!("refs/{}", name),
+        format!("refs/tags/{}", name),
+        format!("refs/heads/{}", name),
+    ];
+
+    for reference in refs_to_try.into_iter() {
+        match data::get_ref(reference.clone()) {
+            Ok(oid) => return oid,
+            _ => continue,
+        }
     }
+
+    let mut is_hex = true;
+    for c in name.chars() {
+        if !c.is_ascii_hexdigit() {
+            is_hex = false;
+        }
+    }
+
+    if name.len() == 40 && is_hex {
+        return name;
+    }
+
+    panic!(format!("Unknown name {}", name));
 }
 
 fn is_ignored(path: &String) -> bool {
