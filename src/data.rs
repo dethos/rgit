@@ -6,6 +6,11 @@ use walkdir::WalkDir;
 
 static RGIT_DIR: &'static str = ".rgit";
 
+pub struct RefValue {
+    pub value: String,
+    pub symbolic: bool,
+}
+
 pub fn init() -> std::io::Result<()> {
     fs::create_dir(RGIT_DIR)?;
     fs::create_dir(format!("{}/{}", RGIT_DIR, "objects"))?;
@@ -44,17 +49,18 @@ pub fn get_object(hash: String, expected: String) -> String {
     return data;
 }
 
-pub fn update_ref(reference: String, oid: String) {
+pub fn update_ref(reference: String, value: RefValue) {
+    assert!(!value.symbolic);
     let path = format!("{}/{}", RGIT_DIR, reference);
     let mut parents = Path::new(&path).ancestors();
     parents.next();
 
     let parent = parents.next().unwrap().to_str().unwrap();
     fs::create_dir_all(parent).expect("Cannot create required dirs");
-    fs::write(path, oid).expect("Failed to updated HEAD");
+    fs::write(path, value.value).expect("Failed to updated HEAD");
 }
 
-pub fn get_ref(reference: String) -> Result<String, Box<dyn std::error::Error + 'static>> {
+pub fn get_ref(reference: String) -> Result<RefValue, Box<dyn std::error::Error + 'static>> {
     let ref_path = format!("{}/{}", RGIT_DIR, reference);
     let value = fs::read_to_string(ref_path)?;
 
@@ -62,11 +68,15 @@ pub fn get_ref(reference: String) -> Result<String, Box<dyn std::error::Error + 
         let new_ref: Vec<&str> = value.splitn(2, ":").collect();
         return get_ref(new_ref[1].to_owned());
     }
-    return Ok(value);
+
+    return Ok(RefValue {
+        value,
+        symbolic: false,
+    });
 }
 
-pub fn iter_refs() -> Vec<(String, String)> {
-    let mut refs: Vec<(String, String)> = vec![];
+pub fn iter_refs() -> Vec<(String, RefValue)> {
+    let mut refs: Vec<(String, RefValue)> = vec![];
     refs.push(("HEAD".to_owned(), get_ref("HEAD".to_owned()).unwrap()));
 
     for entry in WalkDir::new(format!("{}/refs/", RGIT_DIR)) {

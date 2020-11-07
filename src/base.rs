@@ -72,14 +72,20 @@ pub fn commit(message: &str) -> String {
     let mut commit = format!("tree {}\n", write_tree(".".to_owned()));
 
     if let Ok(head) = data::get_ref("HEAD".to_owned()) {
-        commit += format!("parent {}\n", head).as_str();
+        commit += format!("parent {}\n", head.value).as_str();
     }
 
     commit += "\n";
     commit += format!("{}\n", message).as_str();
 
     let oid = data::hash_object(&commit.into_bytes(), "commit".to_owned());
-    data::update_ref("HEAD".to_owned(), oid.clone());
+    data::update_ref(
+        "HEAD".to_owned(),
+        data::RefValue {
+            value: oid.clone(),
+            symbolic: false,
+        },
+    );
     return oid;
 }
 
@@ -132,11 +138,23 @@ pub fn iter_commits_and_parents(mut oids: VecDeque<String>) -> Vec<String> {
 pub fn checkout(oid: String) {
     let commit = get_commit(oid.clone());
     read_tree(commit.tree);
-    data::update_ref("HEAD".to_owned(), oid);
+    data::update_ref(
+        "HEAD".to_owned(),
+        data::RefValue {
+            value: oid,
+            symbolic: false,
+        },
+    );
 }
 
 pub fn create_tag(name: String, oid: String) {
-    data::update_ref(format!("refs/tags/{}", name), oid);
+    data::update_ref(
+        format!("refs/tags/{}", name),
+        data::RefValue {
+            value: oid,
+            symbolic: false,
+        },
+    );
 }
 
 pub fn get_oid(mut name: String) -> String {
@@ -153,7 +171,7 @@ pub fn get_oid(mut name: String) -> String {
 
     for reference in refs_to_try.into_iter() {
         match data::get_ref(reference.clone()) {
-            Ok(oid) => return oid,
+            Ok(oid) => return oid.value,
             _ => continue,
         }
     }
@@ -173,7 +191,13 @@ pub fn get_oid(mut name: String) -> String {
 }
 
 pub fn create_branch(name: String, oid: String) {
-    data::update_ref(format!("refs/heads/{}", name), oid);
+    data::update_ref(
+        format!("refs/heads/{}", name),
+        data::RefValue {
+            value: oid,
+            symbolic: false,
+        },
+    );
 }
 
 fn is_ignored(path: &String) -> bool {
