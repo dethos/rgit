@@ -55,8 +55,14 @@ pub fn update_ref(reference: String, oid: String) {
 }
 
 pub fn get_ref(reference: String) -> Result<String, Box<dyn std::error::Error + 'static>> {
-    let oid = fs::read_to_string(format!("{}/{}", RGIT_DIR, reference))?;
-    return Ok(oid);
+    let ref_path = format!("{}/{}", RGIT_DIR, reference);
+    let value = fs::read_to_string(ref_path)?;
+
+    if !value.is_empty() && value.starts_with("ref:") {
+        let new_ref: Vec<&str> = value.splitn(2, ":").collect();
+        return get_ref(new_ref[1].to_owned());
+    }
+    return Ok(value);
 }
 
 pub fn iter_refs() -> Vec<(String, String)> {
