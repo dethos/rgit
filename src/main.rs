@@ -1,5 +1,5 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 use std::fs;
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -120,9 +120,11 @@ fn commit(matches: ArgMatches) {
 fn log_commits(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("log") {
         let provided_ref = cmd_matches.value_of("oid").unwrap().to_owned();
-        let mut oid = base::get_oid(provided_ref.to_owned());
+        let initial_oid = base::get_oid(provided_ref.to_owned());
+        let mut oids = VecDeque::new();
+        oids.push_back(initial_oid);
 
-        loop {
+        for oid in base::iter_commits_and_parents(oids) {
             let commit = base::get_commit(oid.clone());
 
             println!("commit {}", oid);
@@ -132,8 +134,6 @@ fn log_commits(matches: ArgMatches) {
             if commit.parent == "" {
                 break;
             }
-
-            oid = commit.parent;
         }
     }
 }
@@ -156,11 +156,11 @@ fn tag(matches: ArgMatches) {
 
 fn k() {
     let mut dot = "digraph commits {\n".to_owned();
-    let mut oids = HashSet::new();
+    let mut oids = VecDeque::new();
     for refinfo in data::iter_refs() {
         dot.push_str(&format!("\"{}\" [shape=note]\n", refinfo.0));
         dot.push_str(&format!("\"{}\" -> \"{}\"", refinfo.0, refinfo.1));
-        oids.insert(refinfo.1);
+        oids.push_back(refinfo.1);
     }
 
     for oid in base::iter_commits_and_parents(oids) {

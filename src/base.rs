@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -109,13 +109,12 @@ pub fn get_commit(oid: String) -> Commit {
     };
 }
 
-pub fn iter_commits_and_parents(mut oids: HashSet<String>) -> Vec<String> {
+pub fn iter_commits_and_parents(mut oids: VecDeque<String>) -> Vec<String> {
     let mut visited: HashSet<String> = HashSet::new();
     let mut oid_sequence = vec![];
 
     while !oids.is_empty() {
-        let oid = oids.iter().next().cloned().unwrap();
-        oids.remove(&oid);
+        let oid = oids.pop_front().unwrap();
         if oid == "" || visited.contains(&oid) {
             continue;
         }
@@ -123,7 +122,8 @@ pub fn iter_commits_and_parents(mut oids: HashSet<String>) -> Vec<String> {
         oid_sequence.push(oid.clone());
 
         let commit = get_commit(oid);
-        oids.insert(commit.parent);
+        // Deal with parent next
+        oids.push_front(commit.parent);
     }
 
     return oid_sequence;
