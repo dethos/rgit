@@ -2,6 +2,7 @@ use sha1::{Digest, Sha1};
 use std::fs;
 use std::path::Path;
 use std::str;
+use walkdir::WalkDir;
 
 static RGIT_DIR: &'static str = ".rgit";
 
@@ -56,4 +57,24 @@ pub fn update_ref(reference: String, oid: String) {
 pub fn get_ref(reference: String) -> Result<String, Box<dyn std::error::Error + 'static>> {
     let oid = fs::read_to_string(format!("{}/{}", RGIT_DIR, reference))?;
     return Ok(oid);
+}
+
+pub fn iter_refs() -> Vec<(String, String)> {
+    let mut refs: Vec<(String, String)> = vec![];
+    refs.push(("HEAD".to_owned(), get_ref("HEAD".to_owned()).unwrap()));
+
+    for entry in WalkDir::new(format!("{}/refs/", RGIT_DIR)) {
+        let item = entry.unwrap();
+        let metadata = item.metadata().unwrap();
+
+        if metadata.is_file() {
+            let relative_path = item.path().strip_prefix(RGIT_DIR).unwrap();
+            refs.push((
+                relative_path.to_str().unwrap().to_owned(),
+                get_ref(relative_path.to_str().unwrap().to_owned()).unwrap(),
+            ));
+        }
+    }
+
+    return refs;
 }

@@ -54,6 +54,7 @@ fn main() {
                 .arg(Arg::with_name("name").index(1).required(true))
                 .arg(Arg::with_name("oid").index(2).default_value("@")),
         )
+        .subcommand(SubCommand::with_name("k").about("visualize refs and commits"))
         .get_matches();
 
     match matches.subcommand_name() {
@@ -66,6 +67,7 @@ fn main() {
         Some("log") => log_commits(matches),
         Some("checkout") => checkout(matches),
         Some("tag") => tag(matches),
+        Some("k") => k(),
         _ => println!("unknown sub command"),
     }
 }
@@ -146,5 +148,11 @@ fn tag(matches: ArgMatches) {
         let provided_ref = cmd_matches.value_of("oid").unwrap().to_owned();
         let oid = base::get_oid(provided_ref.clone());
         base::create_tag(name, oid);
+    }
+}
+
+fn k() {
+    for refinfo in data::iter_refs() {
+        println!("{} {}", refinfo.0, refinfo.1);
     }
 }
