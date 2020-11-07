@@ -1,6 +1,8 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 use std::collections::HashSet;
 use std::fs;
+use std::io::Write;
+use std::process::{Command, Stdio};
 mod base;
 mod data;
 
@@ -153,18 +155,41 @@ fn tag(matches: ArgMatches) {
 }
 
 fn k() {
+    let mut dot = "digraph commits {\n".to_owned();
     let mut oids = HashSet::new();
     for refinfo in data::iter_refs() {
-        println!("{} {}", refinfo.0, refinfo.1);
+        dot.push_str(&format!("\"{}\" [shape=note]\n", refinfo.0));
+        dot.push_str(&format!("\"{}\" -> \"{}\"", refinfo.0, refinfo.1));
         oids.insert(refinfo.1);
     }
 
     for oid in base::iter_commits_and_parents(oids) {
         let commit = base::get_commit(oid.clone());
-        println!("{}", oid);
+        dot.push_str(&format!(
+            "\"{}\" [shape=box style=filled label=\"{}\"]\n",
+            oid,
+            &oid[0..10]
+        ));
         if commit.parent != "" {
             println!("Parent: {}", commit.parent);
+            dot.push_str(&format!("\"{}\" -> \"{}\"\n", oid, commit.parent));
         }
     }
-    // TODO visualize refs
+    dot.push_str("}");
+    println!("{}", dot);
+
+    let mut child = Command::new("dot")
+        .arg("-Tgtk")
+        .arg("/dev/stdin")
+        .stdin(Stdio::piped())
+        .spawn()
+        .expect("Failed to draw graph");
+
+    {
+        let stdin = child.stdin.as_mut().expect("Cannot get dot stdin");
+        stdin
+            .write_all(dot.into_bytes().as_mut_slice())
+            .expect("failed to write graph data");
+    }
+    let _ = child.wait();
 }
