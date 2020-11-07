@@ -1,4 +1,5 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
+use std::collections::HashSet;
 use std::fs;
 mod base;
 mod data;
@@ -152,7 +153,18 @@ fn tag(matches: ArgMatches) {
 }
 
 fn k() {
+    let mut oids = HashSet::new();
     for refinfo in data::iter_refs() {
         println!("{} {}", refinfo.0, refinfo.1);
+        oids.insert(refinfo.1);
     }
+
+    for oid in base::iter_commits_and_parents(oids) {
+        let commit = base::get_commit(oid.clone());
+        println!("{}", oid);
+        if commit.parent != "" {
+            println!("Parent: {}", commit.parent);
+        }
+    }
+    // TODO visualize refs
 }

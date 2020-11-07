@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -107,6 +107,26 @@ pub fn get_commit(oid: String) -> Commit {
         parent,
         message,
     };
+}
+
+pub fn iter_commits_and_parents(mut oids: HashSet<String>) -> Vec<String> {
+    let mut visited: HashSet<String> = HashSet::new();
+    let mut oid_sequence = vec![];
+
+    while !oids.is_empty() {
+        let oid = oids.iter().next().cloned().unwrap();
+        oids.remove(&oid);
+        if oid == "" || visited.contains(&oid) {
+            continue;
+        }
+        visited.insert(oid.clone());
+        oid_sequence.push(oid.clone());
+
+        let commit = get_commit(oid);
+        oids.insert(commit.parent);
+    }
+
+    return oid_sequence;
 }
 
 pub fn checkout(oid: String) {
