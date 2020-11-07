@@ -58,6 +58,12 @@ fn main() {
                 .arg(Arg::with_name("oid").index(2).default_value("@")),
         )
         .subcommand(SubCommand::with_name("k").about("visualize refs and commits"))
+        .subcommand(
+            SubCommand::with_name("branch")
+                .about("Create a new branch")
+                .arg(Arg::with_name("name").index(1).required(true))
+                .arg(Arg::with_name("start_point").index(2).default_value("@")),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -71,6 +77,7 @@ fn main() {
         Some("checkout") => checkout(matches),
         Some("tag") => tag(matches),
         Some("k") => k(),
+        Some("branch") => branch(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -192,4 +199,14 @@ fn k() {
             .expect("failed to write graph data");
     }
     let _ = child.wait();
+}
+
+fn branch(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("branch") {
+        let name = cmd_matches.value_of("name").unwrap().to_owned();
+        let provided_ref = cmd_matches.value_of("start_point").unwrap().to_owned();
+        let oid = base::get_oid(provided_ref.clone());
+        base::create_branch(name.clone(), oid.clone());
+        println!("Branch {} created_at {}", name, oid);
+    }
 }

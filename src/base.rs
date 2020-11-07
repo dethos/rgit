@@ -172,6 +172,10 @@ pub fn get_oid(mut name: String) -> String {
     panic!(format!("Unknown name {}", name));
 }
 
+pub fn create_branch(name: String, oid: String) {
+    data::update_ref(format!("refs/heads/{}", name), oid);
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true
