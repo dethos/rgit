@@ -50,15 +50,23 @@ pub fn get_object(hash: String, expected: String) -> String {
 }
 
 pub fn update_ref(mut reference: String, value: RefValue, deref: bool) {
-    assert!(!value.symbolic);
     reference = get_ref_internal(reference, deref).0;
+    let content: String;
+
+    assert!(value.value != "");
+    if value.symbolic {
+        content = format!("ref: {}", value.value);
+    } else {
+        content = value.value;
+    }
+
     let path = format!("{}/{}", RGIT_DIR, reference);
     let mut parents = Path::new(&path).ancestors();
     parents.next();
 
     let parent = parents.next().unwrap().to_str().unwrap();
     fs::create_dir_all(parent).expect("Cannot create required dirs");
-    fs::write(path, value.value).expect("Failed to updated HEAD");
+    fs::write(path, content).expect("Failed to updated HEAD");
 }
 
 pub fn get_ref(reference: String, deref: bool) -> RefValue {
