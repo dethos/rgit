@@ -49,9 +49,9 @@ pub fn get_object(hash: String, expected: String) -> String {
     return data;
 }
 
-pub fn update_ref(mut reference: String, value: RefValue) {
+pub fn update_ref(mut reference: String, value: RefValue, deref: bool) {
     assert!(!value.symbolic);
-    reference = get_ref_internal(reference).0;
+    reference = get_ref_internal(reference, deref).0;
     let path = format!("{}/{}", RGIT_DIR, reference);
     let mut parents = Path::new(&path).ancestors();
     parents.next();
@@ -61,13 +61,13 @@ pub fn update_ref(mut reference: String, value: RefValue) {
     fs::write(path, value.value).expect("Failed to updated HEAD");
 }
 
-pub fn get_ref(reference: String) -> RefValue {
-    return get_ref_internal(reference).1;
+pub fn get_ref(reference: String, deref: bool) -> RefValue {
+    return get_ref_internal(reference, deref).1;
 }
 
-pub fn iter_refs() -> Vec<(String, RefValue)> {
+pub fn iter_refs(deref: bool) -> Vec<(String, RefValue)> {
     let mut refs: Vec<(String, RefValue)> = vec![];
-    refs.push(("HEAD".to_owned(), get_ref("HEAD".to_owned())));
+    refs.push(("HEAD".to_owned(), get_ref("HEAD".to_owned(), deref)));
 
     for entry in WalkDir::new(format!("{}/refs/", RGIT_DIR)) {
         let item = entry.unwrap();
@@ -77,7 +77,7 @@ pub fn iter_refs() -> Vec<(String, RefValue)> {
             let relative_path = item.path().strip_prefix(RGIT_DIR).unwrap();
             refs.push((
                 relative_path.to_str().unwrap().to_owned(),
-                get_ref(relative_path.to_str().unwrap().to_owned()),
+                get_ref(relative_path.to_str().unwrap().to_owned(), deref),
             ));
         }
     }
@@ -85,20 +85,18 @@ pub fn iter_refs() -> Vec<(String, RefValue)> {
     return refs;
 }
 
-pub fn get_ref_internal(reference: String) -> (String, RefValue) {
+pub fn get_ref_internal(reference: String, deref: bool) -> (String, RefValue) {
     let ref_path = format!("{}/{}", RGIT_DIR, reference);
-    let value = fs::read_to_string(ref_path).unwrap_or("".to_owned());
+    let mut value = fs::read_to_string(ref_path).unwrap_or("".to_owned());
+    let symbolic = !value.is_empty() && value.starts_with("ref:");
 
-    if !value.is_empty() && value.starts_with("ref:") {
+    if symbolic {
         let new_ref: Vec<&str> = value.splitn(2, ":").collect();
-        return get_ref_internal(new_ref[1].to_owned());
+        value = new_ref[1].to_owned();
+        if deref {
+            return get_ref_internal(value, deref);
+        }
     }
 
-    return (
-        reference,
-        RefValue {
-            value,
-            symbolic: false,
-        },
-    );
+    return (reference, RefValue { value, symbolic });
 }

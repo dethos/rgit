@@ -164,10 +164,12 @@ fn tag(matches: ArgMatches) {
 fn k() {
     let mut dot = "digraph commits {\n".to_owned();
     let mut oids = VecDeque::new();
-    for refinfo in data::iter_refs() {
+    for refinfo in data::iter_refs(false) {
         dot.push_str(&format!("\"{}\" [shape=note]\n", refinfo.0));
         dot.push_str(&format!("\"{}\" -> \"{}\"", refinfo.0, refinfo.1.value));
-        oids.push_back(refinfo.1.value);
+        if !refinfo.1.symbolic {
+            oids.push_back(refinfo.1.value);
+        }
     }
 
     for oid in base::iter_commits_and_parents(oids) {
