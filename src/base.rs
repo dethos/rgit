@@ -71,7 +71,8 @@ pub fn read_tree(oid: String) {
 pub fn commit(message: &str) -> String {
     let mut commit = format!("tree {}\n", write_tree(".".to_owned()));
 
-    if let Ok(head) = data::get_ref("HEAD".to_owned()) {
+    let head = data::get_ref("HEAD".to_owned());
+    if head.value != "" {
         commit += format!("parent {}\n", head.value).as_str();
     }
 
@@ -170,9 +171,11 @@ pub fn get_oid(mut name: String) -> String {
     ];
 
     for reference in refs_to_try.into_iter() {
-        match data::get_ref(reference.clone()) {
-            Ok(oid) => return oid.value,
-            _ => continue,
+        let found = data::get_ref(reference.clone());
+        if found.value != "" {
+            return found.value;
+        } else {
+            continue;
         }
     }
 

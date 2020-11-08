@@ -49,8 +49,9 @@ pub fn get_object(hash: String, expected: String) -> String {
     return data;
 }
 
-pub fn update_ref(reference: String, value: RefValue) {
+pub fn update_ref(mut reference: String, value: RefValue) {
     assert!(!value.symbolic);
+    reference = get_ref_internal(reference).0;
     let path = format!("{}/{}", RGIT_DIR, reference);
     let mut parents = Path::new(&path).ancestors();
     parents.next();
@@ -60,24 +61,13 @@ pub fn update_ref(reference: String, value: RefValue) {
     fs::write(path, value.value).expect("Failed to updated HEAD");
 }
 
-pub fn get_ref(reference: String) -> Result<RefValue, Box<dyn std::error::Error + 'static>> {
-    let ref_path = format!("{}/{}", RGIT_DIR, reference);
-    let value = fs::read_to_string(ref_path)?;
-
-    if !value.is_empty() && value.starts_with("ref:") {
-        let new_ref: Vec<&str> = value.splitn(2, ":").collect();
-        return get_ref(new_ref[1].to_owned());
-    }
-
-    return Ok(RefValue {
-        value,
-        symbolic: false,
-    });
+pub fn get_ref(reference: String) -> RefValue {
+    return get_ref_internal(reference).1;
 }
 
 pub fn iter_refs() -> Vec<(String, RefValue)> {
     let mut refs: Vec<(String, RefValue)> = vec![];
-    refs.push(("HEAD".to_owned(), get_ref("HEAD".to_owned()).unwrap()));
+    refs.push(("HEAD".to_owned(), get_ref("HEAD".to_owned())));
 
     for entry in WalkDir::new(format!("{}/refs/", RGIT_DIR)) {
         let item = entry.unwrap();
@@ -87,10 +77,28 @@ pub fn iter_refs() -> Vec<(String, RefValue)> {
             let relative_path = item.path().strip_prefix(RGIT_DIR).unwrap();
             refs.push((
                 relative_path.to_str().unwrap().to_owned(),
-                get_ref(relative_path.to_str().unwrap().to_owned()).unwrap(),
+                get_ref(relative_path.to_str().unwrap().to_owned()),
             ));
         }
     }
 
     return refs;
+}
+
+pub fn get_ref_internal(reference: String) -> (String, RefValue) {
+    let ref_path = format!("{}/{}", RGIT_DIR, reference);
+    let value = fs::read_to_string(ref_path).unwrap_or("".to_owned());
+
+    if !value.is_empty() && value.starts_with("ref:") {
+        let new_ref: Vec<&str> = value.splitn(2, ":").collect();
+        return get_ref_internal(new_ref[1].to_owned());
+    }
+
+    return (
+        reference,
+        RefValue {
+            value,
+            symbolic: false,
+        },
+    );
 }
