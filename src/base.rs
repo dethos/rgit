@@ -215,6 +215,19 @@ pub fn create_branch(name: String, oid: String) {
     );
 }
 
+pub fn init() -> std::io::Result<()> {
+    data::init()?;
+    data::update_ref(
+        "HEAD".to_owned(),
+        data::RefValue {
+            symbolic: true,
+            value: "refs/heads/master".to_owned(),
+        },
+        true,
+    );
+    Ok(())
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true

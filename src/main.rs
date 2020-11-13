@@ -83,7 +83,7 @@ fn main() {
 }
 
 fn init() {
-    match data::init() {
+    match base::init() {
         Ok(()) => println!("Repository created"),
         _ => println!("Failed. Perhaps the repository already exists."),
     }
