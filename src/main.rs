@@ -49,7 +49,7 @@ fn main() {
         .subcommand(
             SubCommand::with_name("checkout")
                 .about("Move the current content and HEAD to given commit")
-                .arg(Arg::with_name("oid").index(1).required(true)),
+                .arg(Arg::with_name("commit").index(1).required(true)),
         )
         .subcommand(
             SubCommand::with_name("tag")
@@ -147,8 +147,8 @@ fn log_commits(matches: ArgMatches) {
 
 fn checkout(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("checkout") {
-        let oid = base::get_oid(cmd_matches.value_of("oid").unwrap().to_owned());
-        base::checkout(oid);
+        let name = cmd_matches.value_of("commit").unwrap().to_owned();
+        base::checkout(name);
     }
 }
 

@@ -137,17 +137,25 @@ pub fn iter_commits_and_parents(mut oids: VecDeque<String>) -> Vec<String> {
     return oid_sequence;
 }
 
-pub fn checkout(oid: String) {
+pub fn checkout(name: String) {
+    let oid = get_oid(name.clone());
     let commit = get_commit(oid.clone());
+    let head;
     read_tree(commit.tree);
-    data::update_ref(
-        "HEAD".to_owned(),
-        data::RefValue {
-            value: oid,
+
+    if is_branch(name.clone()) {
+        head = data::RefValue {
+            symbolic: true,
+            value: format!("refs/heads/{}", name),
+        };
+    } else {
+        head = data::RefValue {
             symbolic: false,
-        },
-        true,
-    );
+            value: oid,
+        };
+    }
+
+    data::update_ref("HEAD".to_owned(), head, false);
 }
 
 pub fn create_tag(name: String, oid: String) {
@@ -268,4 +276,8 @@ fn empty_current_directory(dir: &str) -> io::Result<()> {
         }
     }
     Ok(())
+}
+
+fn is_branch(name: String) -> bool {
+    return data::get_ref(name, true).value != "";
 }
