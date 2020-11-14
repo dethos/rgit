@@ -64,6 +64,7 @@ fn main() {
                 .arg(Arg::with_name("name").index(1).required(true))
                 .arg(Arg::with_name("start_point").index(2).default_value("@")),
         )
+        .subcommand(SubCommand::with_name("status").about("check current branch"))
         .get_matches();
 
     match matches.subcommand_name() {
@@ -78,6 +79,7 @@ fn main() {
         Some("tag") => tag(matches),
         Some("k") => k(),
         Some("branch") => branch(matches),
+        Some("status") => status(),
         _ => println!("unknown sub command"),
     }
 }
@@ -210,5 +212,14 @@ fn branch(matches: ArgMatches) {
         let oid = base::get_oid(provided_ref.clone());
         base::create_branch(name.clone(), oid.clone());
         println!("Branch {} created_at {}", name, oid);
+    }
+}
+
+fn status() {
+    let branch = base::get_branch_name();
+    if branch != "".to_owned() {
+        println!("On branch {}", branch);
+    } else {
+        println!("HEAD detached at {}", &base::get_oid("@".to_owned())[1..10])
     }
 }

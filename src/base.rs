@@ -228,6 +228,16 @@ pub fn init() -> std::io::Result<()> {
     Ok(())
 }
 
+pub fn get_branch_name() -> String {
+    let head = data::get_ref("HEAD".to_owned(), false);
+    if !head.symbolic {
+        return "".to_owned();
+    }
+    assert!(head.value.starts_with("refs/heads/"));
+    let ref_items: Vec<&str> = head.value.splitn(3, "/").collect();
+    return (*ref_items.last().unwrap()).to_owned();
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true
