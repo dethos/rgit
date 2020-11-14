@@ -238,6 +238,15 @@ pub fn get_branch_name() -> String {
     return (*ref_items.last().unwrap()).to_owned();
 }
 
+pub fn iter_branch_names() -> Vec<String> {
+    let mut branches = vec![];
+    for entry in data::iter_refs("refs/heads/", true) {
+        let name: Vec<&str> = entry.0.splitn(2, "refs/heads/").collect();
+        branches.push((*name.last().unwrap()).to_owned());
+    }
+    branches
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true

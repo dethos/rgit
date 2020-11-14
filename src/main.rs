@@ -61,7 +61,7 @@ fn main() {
         .subcommand(
             SubCommand::with_name("branch")
                 .about("Create a new branch")
-                .arg(Arg::with_name("name").index(1).required(true))
+                .arg(Arg::with_name("name").index(1).required(false))
                 .arg(Arg::with_name("start_point").index(2).default_value("@")),
         )
         .subcommand(SubCommand::with_name("status").about("check current branch"))
@@ -166,7 +166,7 @@ fn tag(matches: ArgMatches) {
 fn k() {
     let mut dot = "digraph commits {\n".to_owned();
     let mut oids = VecDeque::new();
-    for refinfo in data::iter_refs(false) {
+    for refinfo in data::iter_refs("", false) {
         dot.push_str(&format!("\"{}\" [shape=note]\n", refinfo.0));
         dot.push_str(&format!("\"{}\" -> \"{}\"", refinfo.0, refinfo.1.value));
         if !refinfo.1.symbolic {
@@ -207,11 +207,19 @@ fn k() {
 
 fn branch(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("branch") {
-        let name = cmd_matches.value_of("name").unwrap().to_owned();
+        let name = cmd_matches.value_of("name").unwrap_or("").to_owned();
         let provided_ref = cmd_matches.value_of("start_point").unwrap().to_owned();
-        let oid = base::get_oid(provided_ref.clone());
-        base::create_branch(name.clone(), oid.clone());
-        println!("Branch {} created_at {}", name, oid);
+        if name == "" {
+            let current = base::get_branch_name();
+            for branch in base::iter_branch_names() {
+                let prefix = if branch == current { "*" } else { " " };
+                println!("{} {}", prefix, branch);
+            }
+        } else {
+            let oid = base::get_oid(provided_ref.clone());
+            base::create_branch(name.clone(), oid.clone());
+            println!("Branch {} created_at {}", name, oid);
+        }
     }
 }
 

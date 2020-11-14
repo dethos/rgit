@@ -73,9 +73,12 @@ pub fn get_ref(reference: String, deref: bool) -> RefValue {
     return get_ref_internal(reference, deref).1;
 }
 
-pub fn iter_refs(deref: bool) -> Vec<(String, RefValue)> {
+pub fn iter_refs(prefix: &str, deref: bool) -> Vec<(String, RefValue)> {
     let mut refs: Vec<(String, RefValue)> = vec![];
-    refs.push(("HEAD".to_owned(), get_ref("HEAD".to_owned(), deref)));
+
+    if prefix == "" || prefix.starts_with("HEAD") {
+        refs.push(("HEAD".to_owned(), get_ref("HEAD".to_owned(), deref)));
+    }
 
     for entry in WalkDir::new(format!("{}/refs/", RGIT_DIR)) {
         let item = entry.unwrap();
@@ -83,10 +86,12 @@ pub fn iter_refs(deref: bool) -> Vec<(String, RefValue)> {
 
         if metadata.is_file() {
             let relative_path = item.path().strip_prefix(RGIT_DIR).unwrap();
-            refs.push((
-                relative_path.to_str().unwrap().to_owned(),
-                get_ref(relative_path.to_str().unwrap().to_owned(), deref),
-            ));
+            if relative_path.starts_with(prefix) {
+                refs.push((
+                    relative_path.to_str().unwrap().to_owned(),
+                    get_ref(relative_path.to_str().unwrap().to_owned(), deref),
+                ));
+            }
         }
     }
 
@@ -99,7 +104,7 @@ pub fn get_ref_internal(reference: String, deref: bool) -> (String, RefValue) {
     let symbolic = !value.is_empty() && value.starts_with("ref:");
 
     if symbolic {
-        let new_ref: Vec<&str> = value.splitn(2, ":").collect();
+        let new_ref: Vec<&str> = value.splitn(2, ": ").collect();
         value = new_ref[1].to_owned();
         if deref {
             return get_ref_internal(value, deref);
