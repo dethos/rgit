@@ -247,6 +247,17 @@ pub fn iter_branch_names() -> Vec<String> {
     branches
 }
 
+pub fn reset(oid: String) {
+    data::update_ref(
+        "HEAD".to_owned(),
+        data::RefValue {
+            symbolic: false,
+            value: oid,
+        },
+        true,
+    )
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true

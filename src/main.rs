@@ -65,6 +65,11 @@ fn main() {
                 .arg(Arg::with_name("start_point").index(2).default_value("@")),
         )
         .subcommand(SubCommand::with_name("status").about("check current branch"))
+        .subcommand(
+            SubCommand::with_name("reset")
+                .about("Move the current content and HEAD to given commit with dereferencing")
+                .arg(Arg::with_name("commit").index(1).required(true)),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -80,6 +85,7 @@ fn main() {
         Some("k") => k(),
         Some("branch") => branch(matches),
         Some("status") => status(),
+        Some("reset") => reset(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -245,5 +251,12 @@ fn status() {
         println!("On branch {}", branch);
     } else {
         println!("HEAD detached at {}", &base::get_oid("@".to_owned())[1..10])
+    }
+}
+
+fn reset(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("reset") {
+        let oid = base::get_oid(cmd_matches.value_of("commit").unwrap().to_owned());
+        base::reset(oid);
     }
 }
