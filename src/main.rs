@@ -70,6 +70,11 @@ fn main() {
                 .about("Move the current content and HEAD to given commit with dereferencing")
                 .arg(Arg::with_name("commit").index(1).required(true)),
         )
+        .subcommand(
+            SubCommand::with_name("show")
+                .about("Show diff from a commit")
+                .arg(Arg::with_name("oid").index(1).default_value("@")),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -86,6 +91,7 @@ fn main() {
         Some("branch") => branch(matches),
         Some("status") => status(),
         Some("reset") => reset(matches),
+        Some("show") => show(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -152,15 +158,7 @@ fn log_commits(matches: ArgMatches) {
         for oid in base::iter_commits_and_parents(oids) {
             let commit = base::get_commit(oid.clone());
 
-            let ref_str = if refs.contains_key(&oid) {
-                refs.get_mut(&oid).unwrap().join(", ")
-            } else {
-                "".to_owned()
-            };
-
-            println!("commit {} {}", oid, ref_str);
-            println!("{}", commit.message);
-            println!("");
+            print_commit(oid, &commit, refs.clone());
 
             if commit.parent == "" {
                 break;
@@ -259,4 +257,25 @@ fn reset(matches: ArgMatches) {
         let oid = base::get_oid(cmd_matches.value_of("commit").unwrap().to_owned());
         base::reset(oid);
     }
+}
+
+fn show(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("show") {
+        let oid = base::get_oid(cmd_matches.value_of("oid").unwrap().to_owned());
+        let commit = base::get_commit(oid.clone());
+        let refs: HashMap<String, Vec<String>> = HashMap::new();
+        print_commit(oid, &commit, refs)
+    }
+}
+
+fn print_commit(oid: String, commit: &base::Commit, mut refs: HashMap<String, Vec<String>>) {
+    let ref_str = if refs.contains_key(&oid) {
+        refs.get_mut(&oid).unwrap().join(", ")
+    } else {
+        "".to_owned()
+    };
+
+    println!("commit {} {}", oid, ref_str);
+    println!("{}", commit.message);
+    println!("");
 }
