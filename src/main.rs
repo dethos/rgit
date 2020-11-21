@@ -1,10 +1,11 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::io::Write;
 use std::process::{Command, Stdio};
 mod base;
 mod data;
+mod diff;
 
 fn main() {
     let matches = App::new("rgit vcs")
@@ -264,7 +265,18 @@ fn show(matches: ArgMatches) {
         let oid = base::get_oid(cmd_matches.value_of("oid").unwrap().to_owned());
         let commit = base::get_commit(oid.clone());
         let refs: HashMap<String, Vec<String>> = HashMap::new();
-        print_commit(oid, &commit, refs)
+        let parent_tree = if commit.parent != "".to_owned() {
+            base::get_commit(commit.parent.clone()).tree
+        } else {
+            "".to_owned()
+        };
+
+        print_commit(oid, &commit, refs);
+        let result = diff::diff_trees(
+            base::get_tree(parent_tree, "".to_owned()),
+            base::get_tree(commit.tree, "".to_owned()),
+        );
+        println!("{}", result);
     }
 }
 

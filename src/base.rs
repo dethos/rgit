@@ -181,7 +181,7 @@ pub fn get_oid(mut name: String) -> String {
         format!("refs/heads/{}", name),
     ];
 
-    for reference in refs_to_try.into_iter() {
+    for reference in refs_to_try.iter() {
         let found = data::get_ref(reference.clone(), false);
         if found.value != "" {
             return found.value;
@@ -268,6 +268,11 @@ fn is_ignored(path: &String) -> bool {
 
 fn tree_entries(oid: String) -> Vec<(String, String, String)> {
     let mut entries: Vec<(String, String, String)> = vec![];
+
+    if oid == "".to_owned() {
+        return entries;
+    }
+
     let tree_data = data::get_object(oid, "tree".to_owned());
     for line in tree_data.split_terminator("\n") {
         let items: Vec<&str> = line.splitn(3, " ").collect();
@@ -280,7 +285,7 @@ fn tree_entries(oid: String) -> Vec<(String, String, String)> {
     return entries;
 }
 
-fn get_tree(oid: String, base_path: String) -> HashMap<String, String> {
+pub fn get_tree(oid: String, base_path: String) -> HashMap<String, String> {
     let mut result = HashMap::new();
     for entry in tree_entries(oid) {
         // _type, oid, name
