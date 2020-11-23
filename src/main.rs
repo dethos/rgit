@@ -76,6 +76,11 @@ fn main() {
                 .about("Show diff from a commit")
                 .arg(Arg::with_name("oid").index(1).default_value("@")),
         )
+        .subcommand(
+            SubCommand::with_name("diff")
+                .about("Compare the working tree with the given commit")
+                .arg(Arg::with_name("commit").index(1).default_value("@")),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -93,6 +98,7 @@ fn main() {
         Some("status") => status(),
         Some("reset") => reset(matches),
         Some("show") => show(matches),
+        Some("diff") => difference(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -275,6 +281,18 @@ fn show(matches: ArgMatches) {
         let result = diff::diff_trees(
             base::get_tree(parent_tree, "".to_owned()),
             base::get_tree(commit.tree, "".to_owned()),
+        );
+        println!("{}", result);
+    }
+}
+
+fn difference(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("diff") {
+        let oid = base::get_oid(cmd_matches.value_of("commit").unwrap().to_owned());
+        let commit = base::get_commit(oid);
+        let result = diff::diff_trees(
+            base::get_tree(commit.tree, "".to_owned()),
+            base::get_working_tree(),
         );
         println!("{}", result);
     }

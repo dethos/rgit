@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 use std::io;
 use std::path::Path;
+use walkdir::WalkDir;
 #[path = "data.rs"]
 mod data;
 
@@ -302,6 +303,25 @@ pub fn get_tree(oid: String, base_path: String) -> HashMap<String, String> {
         }
     }
     result
+}
+
+pub fn get_working_tree() -> HashMap<String, String> {
+    let mut result = HashMap::new();
+
+    for entry in WalkDir::new(".") {
+        let item = entry.unwrap();
+        let relative_path = item.path().strip_prefix("./").unwrap();
+        let metadata = item.metadata().unwrap();
+        let path = item.path().to_str().unwrap().to_owned();
+        if metadata.is_file() && !is_ignored(&path.clone()) {
+            let content = fs::read(path.clone()).unwrap();
+            result.insert(
+                relative_path.to_str().unwrap().to_owned(),
+                data::hash_object(&content, "blob".to_owned()),
+            );
+        }
+    }
+    return result;
 }
 
 fn empty_current_directory(dir: &str) -> io::Result<()> {
