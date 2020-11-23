@@ -81,6 +81,11 @@ fn main() {
                 .about("Compare the working tree with the given commit")
                 .arg(Arg::with_name("commit").index(1).default_value("@")),
         )
+        .subcommand(
+            SubCommand::with_name("merge")
+                .about("Merge changes of a different commit/branch")
+                .arg(Arg::with_name("commit").index(1).required(true)),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -99,6 +104,7 @@ fn main() {
         Some("reset") => reset(matches),
         Some("show") => show(matches),
         Some("diff") => difference(matches),
+        Some("merge") => merge(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -305,6 +311,13 @@ fn difference(matches: ArgMatches) {
             base::get_working_tree(),
         );
         println!("{}", result);
+    }
+}
+
+fn merge(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("reset") {
+        let oid = base::get_oid(cmd_matches.value_of("commit").unwrap().to_owned());
+        base::merge(oid);
     }
 }
 

@@ -259,6 +259,8 @@ pub fn reset(oid: String) {
     )
 }
 
+pub fn merge(_oid: String) {}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true
