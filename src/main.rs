@@ -252,10 +252,20 @@ fn branch(matches: ArgMatches) {
 
 fn status() {
     let branch = base::get_branch_name();
+    let head = base::get_oid("@".to_owned());
     if branch != "".to_owned() {
         println!("On branch {}", branch);
     } else {
-        println!("HEAD detached at {}", &base::get_oid("@".to_owned())[1..10])
+        println!("HEAD detached at {}", &head[1..10])
+    }
+
+    println!("Changes to be committed:\n");
+    let head_commit = base::get_commit(head);
+    for (path, action) in diff::changed_files(
+        base::get_tree(head_commit.tree, "".to_owned()),
+        base::get_working_tree(),
+    ) {
+        println!("{:>12}: {}", action, path);
     }
 }
 

@@ -67,3 +67,26 @@ pub fn diff_trees(t_from: HashMap<String, String>, t_to: HashMap<String, String>
 
     return output;
 }
+
+pub fn changed_files(
+    t_from: HashMap<String, String>,
+    t_to: HashMap<String, String>,
+) -> Vec<(String, String)> {
+    let mut result = vec![];
+    let trees = vec![t_from, t_to];
+    for (path, oids) in compare_trees(trees).iter() {
+        let o_from = oids[0].clone();
+        let o_to = oids[1].clone();
+        if o_from != o_to {
+            let action = if o_from == "" {
+                "new file"
+            } else if o_to == "" {
+                "deleted"
+            } else {
+                "mofified"
+            };
+            result.push((path.clone(), action.to_owned()))
+        }
+    }
+    return result;
+}
