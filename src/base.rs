@@ -6,6 +6,9 @@ use walkdir::WalkDir;
 #[path = "data.rs"]
 mod data;
 
+#[path = "diff.rs"]
+mod diff;
+
 pub struct Commit {
     pub tree: String,
     pub parent: String,
@@ -259,7 +262,16 @@ pub fn reset(oid: String) {
     )
 }
 
-pub fn merge(_oid: String) {}
+pub fn merge(oid: String) {
+    let head = data::get_ref("HEAD".to_owned(), true);
+    assert!(head.value != "");
+
+    let c_head = get_commit(head.value);
+    let c_other = get_commit(oid);
+
+    read_tree_merged(c_head.tree, c_other.tree);
+    println!("Merged in working tree");
+}
 
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
@@ -350,4 +362,19 @@ fn empty_current_directory(dir: &str) -> io::Result<()> {
 
 fn is_branch(name: String) -> bool {
     return data::get_ref(name, true).value != "";
+}
+
+fn read_tree_merged(head_tree: String, commit_tree: String) {
+    empty_current_directory(".").unwrap();
+    let head_tree = get_tree(head_tree, "".to_owned());
+    let commit_tree = get_tree(commit_tree, "".to_owned());
+    for (path, blob) in diff::merge_trees(head_tree, commit_tree) {
+        let mut dirs = Path::new(&path).ancestors();
+        dirs.next();
+
+        let dir = dirs.next().unwrap().to_str().unwrap();
+
+        fs::create_dir_all(dir).expect("Cannot create required dirs");
+        fs::write(path, blob).expect("Cannot write required object");
+    }
 }

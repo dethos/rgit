@@ -90,3 +90,37 @@ pub fn changed_files(
     }
     return result;
 }
+
+pub fn merge_trees(t_head: HashMap<String, String>, t_other: HashMap<String, String>) -> HashMap<String, String> {
+    let mut tree = HashMap::new();
+    let trees = vec![t_head, t_other];
+    for (path, oids) in compare_trees(trees).iter() {
+        tree.insert(path.clone(), merge_blobs(oids[0].clone(), oids[1].clone()));
+    }
+    return tree;
+}
+
+fn merge_blobs(o_head: String, o_other: String) -> String {
+    let f_head = NamedTempFile::new().unwrap();
+    let f_other = NamedTempFile::new().unwrap();
+
+    if o_head != "" {
+        let content = data::get_object(o_head, "blob".to_owned());
+        fs::write(f_head.path(), content).unwrap();
+    }
+
+    if o_other != "" {
+        let content = data::get_object(o_other, "blob".to_owned());
+        fs::write(f_other.path(), content).unwrap();
+    }
+
+    let output = Command::new("diff")
+        .arg("-DHEAD")
+        .arg(f_head.path())
+        .arg(f_other.path())
+        .stdout(Stdio::piped())
+        .output()
+        .expect("Failed to merge file");
+
+    return String::from_utf8_lossy(&output.stdout).to_string();
+}
