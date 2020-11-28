@@ -73,6 +73,11 @@ pub fn get_ref(reference: String, deref: bool) -> RefValue {
     return get_ref_internal(reference, deref).1;
 }
 
+pub fn delete_ref(reference: String, deref: bool) {
+    let ref_to_del = get_ref_internal(reference, deref).0;
+    fs::remove_file(format!("{}/{}", RGIT_DIR, ref_to_del)).unwrap();
+}
+
 pub fn iter_refs(prefix: &str, deref: bool) -> Vec<(String, RefValue)> {
     let mut refs: Vec<(String, RefValue)> = vec![];
 
