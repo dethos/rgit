@@ -173,7 +173,7 @@ fn log_commits(matches: ArgMatches) {
 
             print_commit(oid, &commit, refs.clone());
 
-            if commit.parent == "" {
+            if commit.parents[0] == "" {
                 break;
             }
         }
@@ -214,9 +214,9 @@ fn k() {
             oid,
             &oid[0..10]
         ));
-        if commit.parent != "" {
-            println!("Parent: {}", commit.parent);
-            dot.push_str(&format!("\"{}\" -> \"{}\"\n", oid, commit.parent));
+        if commit.parents[0] != "" {
+            println!("Parent: {}", commit.parents[0]);
+            dot.push_str(&format!("\"{}\" -> \"{}\"\n", oid, commit.parents[0]));
         }
     }
     dot.push_str("}");
@@ -287,8 +287,8 @@ fn show(matches: ArgMatches) {
         let oid = base::get_oid(cmd_matches.value_of("oid").unwrap().to_owned());
         let commit = base::get_commit(oid.clone());
         let refs: HashMap<String, Vec<String>> = HashMap::new();
-        let parent_tree = if commit.parent != "".to_owned() {
-            base::get_commit(commit.parent.clone()).tree
+        let parent_tree = if commit.parents[0] != "".to_owned() {
+            base::get_commit(commit.parents[0].clone()).tree
         } else {
             "".to_owned()
         };

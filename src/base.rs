@@ -11,7 +11,7 @@ mod diff;
 
 pub struct Commit {
     pub tree: String,
-    pub parent: String,
+    pub parents: Vec<String>,
     pub message: String,
 }
 
@@ -98,7 +98,7 @@ pub fn commit(message: &str) -> String {
 pub fn get_commit(oid: String) -> Commit {
     let commit = data::get_object(oid, "commit".to_owned());
     let tree: String;
-    let mut parent: String = "".to_owned();
+    let mut parents = vec![];
     let message: String;
     let mut message_start = 2;
 
@@ -108,15 +108,17 @@ pub fn get_commit(oid: String) -> Commit {
 
     line_items = lines[1].splitn(2, " ").collect();
     if line_items[0] == "parent" {
-        parent = line_items[1].to_owned();
+        parents.push(line_items[1].to_owned());
         message_start = 3;
+    } else {
+        parents.push("".to_owned());
     }
 
     message = lines[message_start..].join("\n");
 
     return Commit {
         tree,
-        parent,
+        parents,
         message,
     };
 }
@@ -135,7 +137,11 @@ pub fn iter_commits_and_parents(mut oids: VecDeque<String>) -> Vec<String> {
 
         let commit = get_commit(oid);
         // Deal with parent next
-        oids.push_front(commit.parent);
+        oids.push_front(commit.parents[0].clone());
+        // Deal with other parent later
+        if commit.parents.len() > 1 {
+            oids.push_back(commit.parents[1].clone());
+        }
     }
 
     return oid_sequence;
