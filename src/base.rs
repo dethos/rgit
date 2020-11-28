@@ -79,6 +79,11 @@ pub fn commit(message: &str) -> String {
     if head.value != "" {
         commit += format!("parent {}\n", head.value).as_str();
     }
+    let merge_head = data::get_ref("MERGE_HEAD".to_owned(), true);
+    if merge_head.value != "" {
+        commit += format!("parent {}\n", merge_head.value).as_str();
+        data::delete_ref("MERGE_HEAD".to_owned(), false);
+    }
 
     commit += "\n";
     commit += format!("{}\n", message).as_str();
@@ -110,6 +115,13 @@ pub fn get_commit(oid: String) -> Commit {
     if line_items[0] == "parent" {
         parents.push(line_items[1].to_owned());
         message_start = 3;
+
+        //Need to be refactored later
+        let other_parents: Vec<&str> = lines[2].splitn(2, " ").collect();
+        if other_parents[0] == "parent" {
+            parents.push(other_parents[1].to_owned());
+            message_start = 4;
+        }
     } else {
         parents.push("".to_owned());
     }
@@ -273,10 +285,20 @@ pub fn merge(oid: String) {
     assert!(head.value != "");
 
     let c_head = get_commit(head.value);
-    let c_other = get_commit(oid);
+    let c_other = get_commit(oid.clone());
+
+    data::update_ref(
+        "MERGE_HEAD".to_owned(),
+        data::RefValue {
+            symbolic: false,
+            value: oid,
+        },
+        true,
+    );
 
     read_tree_merged(c_head.tree, c_other.tree);
     println!("Merged in working tree");
+    println!("Please commit");
 }
 
 fn is_ignored(path: &String) -> bool {

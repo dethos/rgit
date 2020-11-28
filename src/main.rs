@@ -265,6 +265,11 @@ fn status() {
         println!("HEAD detached at {}", &head[1..10])
     }
 
+    let merge_head = data::get_ref("MERGE_HEAD".to_owned(), true).value;
+    if merge_head != "".to_owned() {
+        println!("Merging with {}", &merge_head[1..10]);
+    }
+
     println!("Changes to be committed:\n");
     let head_commit = base::get_commit(head);
     for (path, action) in diff::changed_files(
@@ -315,7 +320,7 @@ fn difference(matches: ArgMatches) {
 }
 
 fn merge(matches: ArgMatches) {
-    if let Some(cmd_matches) = matches.subcommand_matches("reset") {
+    if let Some(cmd_matches) = matches.subcommand_matches("merge") {
         let oid = base::get_oid(cmd_matches.value_of("commit").unwrap().to_owned());
         base::merge(oid);
     }
