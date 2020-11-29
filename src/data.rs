@@ -81,9 +81,11 @@ pub fn delete_ref(reference: String, deref: bool) {
 pub fn iter_refs(prefix: &str, deref: bool) -> Vec<(String, RefValue)> {
     let mut refs: Vec<(String, RefValue)> = vec![];
 
-    if prefix == "" || prefix.starts_with("HEAD") {
-        refs.push(("HEAD".to_owned(), get_ref("HEAD".to_owned(), deref)));
-    }
+    refs.push(("HEAD".to_owned(), get_ref("HEAD".to_owned(), deref)));
+    refs.push((
+        "MERGE_HEAD".to_owned(),
+        get_ref("MERGE_HEAD".to_owned(), deref),
+    ));
 
     for entry in WalkDir::new(format!("{}/refs/", RGIT_DIR)) {
         let item = entry.unwrap();
@@ -91,16 +93,20 @@ pub fn iter_refs(prefix: &str, deref: bool) -> Vec<(String, RefValue)> {
 
         if metadata.is_file() {
             let relative_path = item.path().strip_prefix(RGIT_DIR).unwrap();
-            if relative_path.starts_with(prefix) {
-                refs.push((
-                    relative_path.to_str().unwrap().to_owned(),
-                    get_ref(relative_path.to_str().unwrap().to_owned(), deref),
-                ));
-            }
+            refs.push((
+                relative_path.to_str().unwrap().to_owned(),
+                get_ref(relative_path.to_str().unwrap().to_owned(), deref),
+            ));
         }
     }
 
-    return refs;
+    let mut filtered_refs = vec![];
+    for reference in refs {
+        if reference.0.starts_with(prefix) && reference.1.value != "".to_owned() {
+            filtered_refs.push(reference);
+        }
+    }
+    return filtered_refs;
 }
 
 pub fn get_ref_internal(reference: String, deref: bool) -> (String, RefValue) {
