@@ -301,6 +301,24 @@ pub fn merge(oid: String) {
     println!("Please commit");
 }
 
+pub fn get_merge_base(commit1: String, commit2: String) -> String {
+    let mut commit1_deq = VecDeque::new();
+    commit1_deq.push_front(commit1);
+
+    let mut commit2_deq = VecDeque::new();
+    commit2_deq.push_front(commit2);
+
+    let parents1 = iter_commits_and_parents(commit1_deq);
+
+    for oid in iter_commits_and_parents(commit2_deq) {
+        if parents1.contains(&oid) {
+            return oid;
+        }
+    }
+
+    return "".to_owned();
+}
+
 fn is_ignored(path: &String) -> bool {
     if path.contains(".rgit") {
         true

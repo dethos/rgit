@@ -86,6 +86,12 @@ fn main() {
                 .about("Merge changes of a different commit/branch")
                 .arg(Arg::with_name("commit").index(1).required(true)),
         )
+        .subcommand(
+            SubCommand::with_name("merge-base")
+                .about("Find the common ancestor between two commits")
+                .arg(Arg::with_name("commit1").index(1).required(true))
+                .arg(Arg::with_name("commit2").index(2).required(true)),
+        )
         .get_matches();
 
     match matches.subcommand_name() {
@@ -105,6 +111,7 @@ fn main() {
         Some("show") => show(matches),
         Some("diff") => difference(matches),
         Some("merge") => merge(matches),
+        Some("merge-base") => merge_base(matches),
         _ => println!("unknown sub command"),
     }
 }
@@ -323,6 +330,14 @@ fn merge(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("merge") {
         let oid = base::get_oid(cmd_matches.value_of("commit").unwrap().to_owned());
         base::merge(oid);
+    }
+}
+
+fn merge_base(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("merge-base") {
+        let commit1 = base::get_oid(cmd_matches.value_of("commit1").unwrap().to_owned());
+        let commit2 = base::get_oid(cmd_matches.value_of("commit2").unwrap().to_owned());
+        println!("{}", base::get_merge_base(commit1, commit2));
     }
 }
 
