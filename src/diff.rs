@@ -91,18 +91,31 @@ pub fn changed_files(
     return result;
 }
 
-pub fn merge_trees(t_head: HashMap<String, String>, t_other: HashMap<String, String>) -> HashMap<String, String> {
+pub fn merge_trees(
+    t_base: HashMap<String, String>,
+    t_head: HashMap<String, String>,
+    t_other: HashMap<String, String>,
+) -> HashMap<String, String> {
     let mut tree = HashMap::new();
-    let trees = vec![t_head, t_other];
+    let trees = vec![t_base, t_head, t_other];
     for (path, oids) in compare_trees(trees).iter() {
-        tree.insert(path.clone(), merge_blobs(oids[0].clone(), oids[1].clone()));
+        tree.insert(
+            path.clone(),
+            merge_blobs(oids[0].clone(), oids[1].clone(), oids[2].clone()),
+        );
     }
     return tree;
 }
 
-fn merge_blobs(o_head: String, o_other: String) -> String {
+fn merge_blobs(o_base: String, o_head: String, o_other: String) -> String {
+    let f_base = NamedTempFile::new().unwrap();
     let f_head = NamedTempFile::new().unwrap();
     let f_other = NamedTempFile::new().unwrap();
+
+    if o_base != "" {
+        let content = data::get_object(o_base, "blob".to_owned());
+        fs::write(f_base.path(), content).unwrap();
+    }
 
     if o_head != "" {
         let content = data::get_object(o_head, "blob".to_owned());
@@ -114,9 +127,16 @@ fn merge_blobs(o_head: String, o_other: String) -> String {
         fs::write(f_other.path(), content).unwrap();
     }
 
-    let output = Command::new("diff")
-        .arg("-DHEAD")
+    let output = Command::new("diff3")
+        .arg("-m")
+        .arg("-L")
+        .arg("HEAD")
         .arg(f_head.path())
+        .arg("-L")
+        .arg("BASE")
+        .arg(f_base.path())
+        .arg("-L")
+        .arg("MERGE_HEAD")
         .arg(f_other.path())
         .stdout(Stdio::piped())
         .output()
