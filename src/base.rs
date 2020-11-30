@@ -285,9 +285,22 @@ pub fn merge(oid: String) {
     assert!(head.value != "");
 
     let merge_base = get_merge_base(oid.clone(), head.value.clone());
-    let c_base = get_commit(merge_base);
-    let c_head = get_commit(head.value);
     let c_other = get_commit(oid.clone());
+
+    // Handle fast-forward merge
+    if merge_base == head.value {
+        read_tree(c_other.tree);
+        data::update_ref(
+            "HEAD".to_owned(),
+            data::RefValue {
+                symbolic: false,
+                value: oid,
+            },
+            true,
+        );
+        println!("Fast-forward merge, no need to commit");
+        return;
+    }
 
     data::update_ref(
         "MERGE_HEAD".to_owned(),
@@ -298,6 +311,8 @@ pub fn merge(oid: String) {
         true,
     );
 
+    let c_base = get_commit(merge_base);
+    let c_head = get_commit(head.value);
     read_tree_merged(c_base.tree, c_head.tree, c_other.tree);
     println!("Merged in working tree");
     println!("Please commit");
