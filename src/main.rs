@@ -6,6 +6,7 @@ use std::process::{Command, Stdio};
 mod base;
 mod data;
 mod diff;
+mod remote;
 
 fn main() {
     let matches = App::new("rgit vcs")
@@ -92,6 +93,11 @@ fn main() {
                 .arg(Arg::with_name("commit1").index(1).required(true))
                 .arg(Arg::with_name("commit2").index(2).required(true)),
         )
+        .subcommand(
+            SubCommand::with_name("fetch")
+                .about("Fetch refs and objects from another repository")
+                .arg(Arg::with_name("remote").index(1).required(true)),
+        )
         .get_matches();
 
     data::set_rgit_dir(".");
@@ -113,6 +119,7 @@ fn main() {
         Some("diff") => difference(matches),
         Some("merge") => merge(matches),
         Some("merge-base") => merge_base(matches),
+        Some("fetch") => fetch(matches),
         _ => println!("unknown sub command"),
     }
     data::reset_rgit_dir();
@@ -340,6 +347,13 @@ fn merge_base(matches: ArgMatches) {
         let commit1 = base::get_oid(cmd_matches.value_of("commit1").unwrap().to_owned());
         let commit2 = base::get_oid(cmd_matches.value_of("commit2").unwrap().to_owned());
         println!("{}", base::get_merge_base(commit1, commit2));
+    }
+}
+
+fn fetch(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("fetch") {
+        let remote_path = cmd_matches.value_of("remote").unwrap().to_owned();
+        remote::fetch(remote_path);
     }
 }
 
