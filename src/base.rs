@@ -101,7 +101,7 @@ pub fn commit(message: &str) -> String {
 }
 
 pub fn get_commit(oid: String) -> Commit {
-    let commit = data::get_object(oid, "commit".to_owned());
+    let commit = data::get_object(get_oid(oid), "commit".to_owned());
     let tree: String;
     let mut parents = vec![];
     let message: String;
@@ -424,7 +424,7 @@ fn empty_current_directory(dir: &str) -> io::Result<()> {
 }
 
 fn is_branch(name: String) -> bool {
-    return data::get_ref(name, true).value != "";
+    return data::get_ref(format!("refs/heads/{}", name), true).value != "";
 }
 
 fn read_tree_merged(base_tree: String, head_tree: String, commit_tree: String) {
