@@ -94,6 +94,7 @@ fn main() {
         )
         .get_matches();
 
+    data::set_rgit_dir(".");
     match matches.subcommand_name() {
         Some("init") => init(),
         Some("hash-object") => hash_object(matches),
@@ -114,6 +115,7 @@ fn main() {
         Some("merge-base") => merge_base(matches),
         _ => println!("unknown sub command"),
     }
+    data::reset_rgit_dir();
 }
 
 fn init() {
