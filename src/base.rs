@@ -459,6 +459,17 @@ pub fn get_working_tree() -> HashMap<String, String> {
     return result;
 }
 
+pub fn is_ancestor_of(commit: String, maybe_ancestor: String) -> bool {
+    let mut commits = VecDeque::new();
+    commits.push_front(commit);
+    for oid in iter_commits_and_parents(commits) {
+        if maybe_ancestor == oid {
+            return true;
+        }
+    }
+    return false;
+}
+
 fn empty_current_directory(dir: &str) -> io::Result<()> {
     // Delete current directory, except the ignored directories and files
     for entry in fs::read_dir(dir)? {

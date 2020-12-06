@@ -31,8 +31,16 @@ pub fn fetch(path: String) {
 }
 
 pub fn push(remote_path: String, reference: String) {
+    let refs = get_remote_refs(remote_path.clone(), REMOTE_REFS_BASE);
+    let empty = "".to_owned();
+    let remote_ref = refs.get(&reference).unwrap_or(&empty);
     let local_ref = data::get_ref(reference.clone(), true).value;
     assert!(local_ref != "".to_string());
+
+    // Don't allow force push
+    assert!(
+        *remote_ref == "".to_owned() || base::is_ancestor_of(local_ref.clone(), remote_ref.clone())
+    );
 
     let commit_oids = vec![&local_ref];
     base::copy_objects_in_commits_and_parents(commit_oids, remote_path.clone(), true);
