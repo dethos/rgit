@@ -176,12 +176,18 @@ pub fn fetch_object_if_missing(oid: String, remote_git_dir: String) {
 
 pub fn push_object(oid: String, remote_git_dir: String) {
     let rgit_remote = remote_git_dir + "/.rgit";
+    let remote_object = format!("{}/objects/{}", rgit_remote, oid.clone());
+
+    if Path::new(&remote_object).exists() {
+        // Only push object if it doesn't exist.
+        // Different implementation from the tutorial, the end result should be
+        // the same.
+        return;
+    }
+
     let dir = RGIT_DIR.lock().unwrap().to_owned();
-    fs::copy(
-        format!("{}/objects/{}", dir, oid),
-        format!("{}/objects/{}", rgit_remote, oid.clone()),
-    )
-    .expect(format!("Failed to push {}", oid).as_str());
+    fs::copy(format!("{}/objects/{}", dir, oid), remote_object)
+        .expect(format!("Failed to push {}", oid).as_str());
 }
 
 fn object_exists(oid: String) -> bool {
