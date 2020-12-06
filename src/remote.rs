@@ -14,7 +14,7 @@ pub fn fetch(path: String) {
     let refs = get_remote_refs(path.clone(), REMOTE_REFS_BASE);
 
     let commit_oids: Vec<&String> = refs.values().collect();
-    base::copy_objects_in_commits_and_parents(commit_oids, path.clone());
+    base::copy_objects_in_commits_and_parents(commit_oids, path.clone(), false);
 
     // Update local refs to match server
     for (remote_name, value) in refs.iter() {
@@ -28,6 +28,25 @@ pub fn fetch(path: String) {
             true,
         )
     }
+}
+
+pub fn push(remote_path: String, reference: String) {
+    let local_ref = data::get_ref(reference.clone(), true).value;
+    assert!(local_ref != "".to_string());
+
+    let commit_oids = vec![&local_ref];
+    base::copy_objects_in_commits_and_parents(commit_oids, remote_path.clone(), true);
+
+    data::set_rgit_dir(remote_path.as_str());
+    data::update_ref(
+        reference,
+        data::RefValue {
+            symbolic: false,
+            value: local_ref,
+        },
+        true,
+    );
+    data::reset_rgit_dir();
 }
 
 fn get_remote_refs(path: String, prefix: &str) -> HashMap<String, String> {

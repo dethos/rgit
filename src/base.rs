@@ -159,10 +159,14 @@ pub fn iter_commits_and_parents(mut oids: VecDeque<String>) -> Vec<String> {
     return oid_sequence;
 }
 
-pub fn copy_objects_in_commits_and_parents(mut oids: Vec<&String>, remote_path: String) {
+pub fn copy_objects_in_commits_and_parents(
+    mut oids: Vec<&String>,
+    remote_path: String,
+    push: bool,
+) {
     // This one is a little be different than the functions in the tutorial
-    // But the end result is the same, copy all missing objects from the remote
-    // repository
+    // But the end result is the same, copy all missing objects from one repo
+    // to another
     let mut visited: HashSet<String> = HashSet::new();
     let mut commits = oids
         .into_iter()
@@ -175,12 +179,15 @@ pub fn copy_objects_in_commits_and_parents(mut oids: Vec<&String>, remote_path: 
         if oid == "" || visited.contains(&oid) {
             continue;
         }
-
-        data::fetch_object_if_missing(oid.clone(), remote_path.clone());
+        if push {
+            data::push_object(oid.clone(), remote_path.clone());
+        } else {
+            data::fetch_object_if_missing(oid.clone(), remote_path.clone());
+        }
         visited.insert(oid.clone());
 
         let commit = get_commit(oid.clone());
-        copy_tree_objects(commit.tree, &mut visited, remote_path.clone());
+        copy_tree_objects(commit.tree, &mut visited, remote_path.clone(), push);
 
         let parent1 = commit.parents[0].clone();
         // Deal with parent next
@@ -193,7 +200,7 @@ pub fn copy_objects_in_commits_and_parents(mut oids: Vec<&String>, remote_path: 
     }
 }
 
-fn copy_tree_objects(oid: String, visited: &mut HashSet<String>, remote_path: String) {
+fn copy_tree_objects(oid: String, visited: &mut HashSet<String>, remote_path: String, push: bool) {
     // get_tree already walks recursively the provided tree. Lets use that instead.
     visited.insert(oid.clone());
     data::fetch_object_if_missing(oid.clone(), remote_path.clone());
@@ -202,7 +209,11 @@ fn copy_tree_objects(oid: String, visited: &mut HashSet<String>, remote_path: St
         if visited.contains(object_id) {
             continue;
         }
-        data::fetch_object_if_missing(object_id.clone(), remote_path.clone());
+        if push {
+            data::push_object(object_id.clone(), remote_path.clone());
+        } else {
+            data::fetch_object_if_missing(object_id.clone(), remote_path.clone());
+        }
     }
 }
 

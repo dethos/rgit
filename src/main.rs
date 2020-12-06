@@ -98,6 +98,12 @@ fn main() {
                 .about("Fetch refs and objects from another repository")
                 .arg(Arg::with_name("remote").index(1).required(true)),
         )
+        .subcommand(
+            SubCommand::with_name("push")
+                .about("Push refs and objects to another repository")
+                .arg(Arg::with_name("remote").index(1).required(true))
+                .arg(Arg::with_name("branch").index(2).required(true)),
+        )
         .get_matches();
 
     data::set_rgit_dir(".");
@@ -120,6 +126,7 @@ fn main() {
         Some("merge") => merge(matches),
         Some("merge-base") => merge_base(matches),
         Some("fetch") => fetch(matches),
+        Some("push") => push(matches),
         _ => println!("unknown sub command"),
     }
     data::reset_rgit_dir();
@@ -354,6 +361,14 @@ fn fetch(matches: ArgMatches) {
     if let Some(cmd_matches) = matches.subcommand_matches("fetch") {
         let remote_path = cmd_matches.value_of("remote").unwrap().to_owned();
         remote::fetch(remote_path);
+    }
+}
+
+fn push(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("push") {
+        let remote_path = cmd_matches.value_of("remote").unwrap().to_owned();
+        let branch_name = cmd_matches.value_of("branch").unwrap().to_owned();
+        remote::push(remote_path, format!("refs/heads/{}", branch_name));
     }
 }
 

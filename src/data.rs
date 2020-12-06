@@ -174,6 +174,16 @@ pub fn fetch_object_if_missing(oid: String, remote_git_dir: String) {
     .expect(format!("Failed to fetch {}", oid).as_str());
 }
 
+pub fn push_object(oid: String, remote_git_dir: String) {
+    let rgit_remote = remote_git_dir + "/.rgit";
+    let dir = RGIT_DIR.lock().unwrap().to_owned();
+    fs::copy(
+        format!("{}/objects/{}", dir, oid),
+        format!("{}/objects/{}", rgit_remote, oid.clone()),
+    )
+    .expect(format!("Failed to push {}", oid).as_str());
+}
+
 fn object_exists(oid: String) -> bool {
     let dir = RGIT_DIR.lock().unwrap().to_owned();
     let path = format!("{}/objects/{}", dir.clone(), oid.clone());
