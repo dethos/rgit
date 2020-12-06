@@ -3,12 +3,18 @@ use std::collections::HashMap;
 #[path = "data.rs"]
 mod data;
 
+#[path = "base.rs"]
+mod base;
+
 static REMOTE_REFS_BASE: &'static str = "refs/heads/";
 static LOCAL_REFS_BASE: &'static str = "refs/remote/";
 
 pub fn fetch(path: String) {
     // Get refs from server
-    let refs = get_remote_refs(path, REMOTE_REFS_BASE);
+    let refs = get_remote_refs(path.clone(), REMOTE_REFS_BASE);
+
+    let commit_oids: Vec<&String> = refs.values().collect();
+    base::copy_objects_in_commits_and_parents(commit_oids, path.clone());
 
     // Update local refs to match server
     for (remote_name, value) in refs.iter() {

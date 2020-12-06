@@ -159,6 +159,53 @@ pub fn iter_commits_and_parents(mut oids: VecDeque<String>) -> Vec<String> {
     return oid_sequence;
 }
 
+pub fn copy_objects_in_commits_and_parents(mut oids: Vec<&String>, remote_path: String) {
+    // This one is a little be different than the functions in the tutorial
+    // But the end result is the same, copy all missing objects from the remote
+    // repository
+    let mut visited: HashSet<String> = HashSet::new();
+    let mut commits = oids
+        .into_iter()
+        .map(|oid| oid.clone())
+        .rev()
+        .collect::<VecDeque<String>>();
+
+    while !commits.is_empty() {
+        let oid = commits.pop_front().unwrap();
+        if oid == "" || visited.contains(&oid) {
+            continue;
+        }
+
+        data::fetch_object_if_missing(oid.clone(), remote_path.clone());
+        visited.insert(oid.clone());
+
+        let commit = get_commit(oid.clone());
+        copy_tree_objects(commit.tree, &mut visited, remote_path.clone());
+
+        let parent1 = commit.parents[0].clone();
+        // Deal with parent next
+        commits.push_front(parent1);
+        // Deal with other parents later
+        if commit.parents.len() > 1 {
+            let parent2 = commit.parents[1].clone();
+            commits.push_back(parent2);
+        }
+    }
+}
+
+fn copy_tree_objects(oid: String, visited: &mut HashSet<String>, remote_path: String) {
+    // get_tree already walks recursively the provided tree. Lets use that instead.
+    visited.insert(oid.clone());
+    data::fetch_object_if_missing(oid.clone(), remote_path.clone());
+
+    for (path, object_id) in get_tree(oid, "./".to_owned()).iter() {
+        if visited.contains(object_id) {
+            continue;
+        }
+        data::fetch_object_if_missing(object_id.clone(), remote_path.clone());
+    }
+}
+
 pub fn checkout(name: String) {
     let oid = get_oid(name.clone());
     let commit = get_commit(oid.clone());
@@ -206,7 +253,7 @@ pub fn get_oid(mut name: String) -> String {
     for reference in refs_to_try.iter() {
         let found = data::get_ref(reference.clone(), false);
         if found.value != "" {
-            return found.value;
+            return data::get_ref(reference.clone(), true).value;
         } else {
             continue;
         }

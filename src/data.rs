@@ -159,3 +159,23 @@ pub fn get_ref_internal(reference: String, deref: bool) -> (String, RefValue) {
 
     return (reference, RefValue { value, symbolic });
 }
+
+pub fn fetch_object_if_missing(oid: String, remote_git_dir: String) {
+    if object_exists(oid.clone()) {
+        return;
+    }
+
+    let dir = RGIT_DIR.lock().unwrap().to_owned();
+    let rgit_remote = remote_git_dir + "/.rgit";
+    fs::copy(
+        format!("{}/objects/{}", rgit_remote, oid.clone()),
+        format!("{}/objects/{}", dir, oid),
+    )
+    .expect(format!("Failed to fetch {}", oid).as_str());
+}
+
+fn object_exists(oid: String) -> bool {
+    let dir = RGIT_DIR.lock().unwrap().to_owned();
+    let path = format!("{}/objects/{}", dir.clone(), oid.clone());
+    return Path::new(path.as_str()).exists();
+}
