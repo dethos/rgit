@@ -1,5 +1,8 @@
 use lazy_static::lazy_static;
+use serde::{Deserialize, Serialize};
+use serde_json::Result;
 use sha1::{Digest, Sha1};
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::str;
@@ -16,6 +19,11 @@ lazy_static! {
 pub struct RefValue {
     pub value: String,
     pub symbolic: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Index {
+    files: HashMap<String, String>,
 }
 
 // The below two methods are not the same thing as a "context manager"
@@ -194,4 +202,30 @@ fn object_exists(oid: String) -> bool {
     let dir = RGIT_DIR.lock().unwrap().to_owned();
     let path = format!("{}/objects/{}", dir.clone(), oid.clone());
     return Path::new(path.as_str()).exists();
+}
+
+pub fn get_index() -> HashMap<String, String> {
+    let mut index_files = HashMap::new();
+    let dir = RGIT_DIR.lock().unwrap().to_owned();
+    let index_path = format!("{}/index", dir.clone());
+    let path = Path::new(index_path.as_str());
+
+    if path.exists() {
+        let index_content = fs::read_to_string(path).expect("Failed to read index file");
+        let index: Index = serde_json::from_str(index_content.as_str()).unwrap();
+        index_files = index.files;
+    }
+
+    return index_files;
+}
+
+pub fn set_index(files: HashMap<String, String>) {
+    let new_index = Index { files: files };
+    let index_content = serde_json::to_string(&new_index).expect("Failed to serialize index");
+
+    let dir = RGIT_DIR.lock().unwrap().to_owned();
+    let index_path = format!("{}/index", dir.clone());
+    let path = Path::new(index_path.as_str());
+
+    fs::write(path, index_content).expect("Failed to write index");
 }

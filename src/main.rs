@@ -104,6 +104,11 @@ fn main() {
                 .arg(Arg::with_name("remote").index(1).required(true))
                 .arg(Arg::with_name("branch").index(2).required(true)),
         )
+        .subcommand(
+            SubCommand::with_name("add")
+                .about("Add files to the index")
+                .arg(Arg::with_name("files").multiple(true)),
+        )
         .get_matches();
 
     data::set_rgit_dir(".");
@@ -127,6 +132,7 @@ fn main() {
         Some("merge-base") => merge_base(matches),
         Some("fetch") => fetch(matches),
         Some("push") => push(matches),
+        Some("add") => add(matches),
         _ => println!("unknown sub command"),
     }
     data::reset_rgit_dir();
@@ -369,6 +375,13 @@ fn push(matches: ArgMatches) {
         let remote_path = cmd_matches.value_of("remote").unwrap().to_owned();
         let branch_name = cmd_matches.value_of("branch").unwrap().to_owned();
         remote::push(remote_path, format!("refs/heads/{}", branch_name));
+    }
+}
+
+fn add(matches: ArgMatches) {
+    if let Some(cmd_matches) = matches.subcommand_matches("add") {
+        let files: Vec<&str> = cmd_matches.values_of("files").unwrap().collect();
+        base::add(files);
     }
 }
 

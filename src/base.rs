@@ -470,6 +470,18 @@ pub fn is_ancestor_of(commit: String, maybe_ancestor: String) -> bool {
     return false;
 }
 
+pub fn add(files: Vec<&str>) {
+    let mut index = data::get_index();
+    for file in files {
+        let content = fs::read(file).expect("Failed to read file");
+        index.insert(
+            file.to_owned(),
+            data::hash_object(&content, "blob".to_owned()),
+        );
+    }
+    data::set_index(index);
+}
+
 fn empty_current_directory(dir: &str) -> io::Result<()> {
     // Delete current directory, except the ignored directories and files
     for entry in fs::read_dir(dir)? {
