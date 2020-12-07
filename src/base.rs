@@ -472,14 +472,34 @@ pub fn is_ancestor_of(commit: String, maybe_ancestor: String) -> bool {
 
 pub fn add(files: Vec<&str>) {
     let mut index = data::get_index();
-    for file in files {
-        let content = fs::read(file).expect("Failed to read file");
-        index.insert(
-            file.to_owned(),
-            data::hash_object(&content, "blob".to_owned()),
-        );
+    for name in files {
+        let file_path = Path::new(name);
+        let metadata = file_path.metadata().unwrap();
+        if metadata.is_file() {
+            add_file(name.to_owned(), &mut index);
+        } else if metadata.is_dir() {
+            add_dir(name.to_owned(), &mut index);
+        }
     }
     data::set_index(index);
+}
+
+fn add_file(file: String, mut index: &mut HashMap<String, String>) {
+    let content = fs::read(file.clone()).expect("Failed to read file");
+    let hash = data::hash_object(&content, "blob".to_owned());
+    index.insert(file, hash);
+}
+
+fn add_dir(dir: String, mut index: &mut HashMap<String, String>) {
+    for entry in WalkDir::new(dir) {
+        let item = entry.unwrap();
+        let relative_path = item.path().strip_prefix("./").unwrap();
+        let metadata = item.metadata().unwrap();
+        let path = item.path().to_str().unwrap().to_owned();
+        if metadata.is_file() && !is_ignored(&path) {
+            add_file(relative_path.to_str().unwrap().to_owned(), index);
+        }
+    }
 }
 
 fn empty_current_directory(dir: &str) -> io::Result<()> {
